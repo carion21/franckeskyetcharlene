@@ -1,12 +1,61 @@
 /* Typography shared by /v1, /v2 and /v3 — PRD §2.2.
    The font stack is byte-identical across the three wireframes, so it is
-   factored here. Loaded from Google Fonts, same source as the wireframes.
+   factored here.
+
+   Les quatre fichiers sont SERVIS PAR L'APPLICATION (`public/fonts/`), pas par
+   Google Fonts. Deux raisons, mesurées :
+
+   1. Chemin critique. Un `@import` dans cette feuille sérialisait trois
+      allers-retours avant le premier pixel : le navigateur devait recevoir puis
+      analyser `fonts.css` AVANT de découvrir l'URL Google, la chercher, puis
+      seulement chercher les `.woff2` sur un troisième domaine. Mesuré en 3G
+      lent sur la production : FCP à 6,2 s, dont 4,1 s passés dans cette chaîne.
+   2. Invariant I2. Quand `fonts.googleapis.com` est injoignable — réseau
+      d'entreprise, opérateur filtrant, coupure — toute la page retombait en
+      Georgia et le nom du couple passait sur deux lignes. Servies depuis la même
+      origine, les polices tombent avec l'application, pas avant elle.
+
+   `font-display: swap` : le texte s'affiche immédiatement dans la police de
+   repli et bascule à l'arrivée du fichier. Un invité pressé lit tout de suite ;
+   il ne regarde pas un hero vide pendant deux secondes.
 
    Great Vibes        → prénoms, titres script dorés
-   Cormorant Garamond → corps de texte, sous-titres
+   Cormorant Garamond → corps de texte, sous-titres (variable, 300→700)
    Cormorant SemiBold → labels, heures, boutons (small caps, letter-spacing large) */
 
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant:wght@500;600;700&display=swap');
+@font-face {
+  font-family: 'Great Vibes';
+  src: url('/fonts/GreatVibes-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fichier variable : une seule requête couvre 300 → 700. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/CormorantGaramond-Variable.woff2') format('woff2-variations'),
+       url('/fonts/CormorantGaramond-Variable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/CormorantGaramond-Italic.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cormorant';
+  src: url('/fonts/Cormorant-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --font-script: 'Great Vibes', 'Segoe Script', 'Brush Script MT', cursive;

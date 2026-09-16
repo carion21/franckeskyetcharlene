@@ -53,9 +53,18 @@
   position: absolute;
   inset: 0;
   background-color: var(--emerald-light);
+  /* WebP d'abord (43 Ko contre 90 Ko pour le JPEG, à cadrage identique) : sur
+     /v3 la photo EST l'élément LCP, et les 47 Ko économisés se lisent
+     directement sur le temps d'affichage en 3G. Les navigateurs qui ne savent
+     pas lire `image-set()` ignorent la déclaration et gardent le JPEG
+     ci-dessus — aucun hero vide nulle part. */
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
     url('/images/couple.jpeg');
+  background-image:
+    radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
+    image-set(url('/images/couple.webp') type('image/webp'),
+              url('/images/couple.jpeg') type('image/jpeg'));
   background-size: cover;
   /* Photo portrait, visages dans le tiers haut : on ancre le cadrage en haut
      pour ne pas les rogner sur un viewport large. */
@@ -69,14 +78,19 @@
 .hero__veil {
   position: absolute;
   inset: 0;
-  /* Voile modulé : discret sur les visages, plus dense derrière le texte. */
+  /* Mesuré au pixel sur la photo réelle : sous la ligne « Abidjan · 10 Octobre
+     2026 », le voile d'origine laissait un fond à rgb(86,118,98), soit 3,04:1
+     pour l'or — sous AA. La rampe monte donc plus vite dès 34 %, là où le texte
+     commence, tout en gardant le creux à 20 % qui dégage les visages : c'est
+     leur photo, on ne l'efface pas, on la module. */
   background:
     linear-gradient(180deg,
-      rgba(2, 56, 35, 0.55) 0%,
-      rgba(2, 56, 35, 0.28) 22%,
-      rgba(2, 56, 35, 0.62) 46%,
-      rgba(2, 56, 35, 0.80) 72%,
-      rgba(2, 56, 35, 0.92) 100%);
+      rgba(2, 56, 35, 0.58) 0%,
+      rgba(2, 56, 35, 0.30) 20%,
+      rgba(2, 56, 35, 0.56) 34%,
+      rgba(2, 56, 35, 0.75) 44%,
+      rgba(2, 56, 35, 0.86) 70%,
+      rgba(2, 56, 35, 0.94) 100%);
 }
 
 .hero__inner { position: relative; z-index: 1; }
@@ -217,7 +231,10 @@
   color: var(--emerald);
 }
 
-.bead__ref { margin: 10px 0 0; color: var(--emerald); opacity: 0.7; font-size: 0.66rem; }
+/* Sans l'opacité 0.7, qui faisait tomber la référence du verset à 3,69:1.
+   L'émeraude pleine sur le crème donne 7,18:1 ; le retrait vient de la taille
+   et des petites capitales. */
+.bead__ref { margin: 10px 0 0; color: var(--emerald); font-size: 0.66rem; }
 
 .bead__card--step {
   display: flex;
@@ -395,7 +412,11 @@
   letter-spacing: 0.06em;
   text-transform: none;
   font-variant: small-caps;
-  opacity: 0.72;
+  /* Pas d'opacité : à 0.72 la mention tombait à 3,01:1, sous AA, alors qu'elle
+     porte l'information la plus utile du champ — que l'email est facultatif.
+     La mise en retrait passe par la graisse, les petites capitales et
+     l'espacement, pas par un texte délavé. */
+  color: var(--cream-dim);
 }
 
 .field__input {
@@ -549,3 +570,19 @@
   .spine__fill { transform: translateX(-50%) scaleY(1); }
   .hero__photo { transform: none !important; }
 }
+
+/* Message affiché uniquement quand JavaScript est absent : le formulaire n'a
+   alors aucun gestionnaire de soumission et ne mène nulle part. */
+.noscript-note {
+  position: relative;
+  z-index: 3;
+  padding: 18px var(--gutter);
+  background: var(--emerald-deep);
+  color: var(--cream);
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.noscript-note p { margin: 0; max-width: 42em; margin-inline: auto; }
+.noscript-note a { color: var(--gold-on-emerald); }

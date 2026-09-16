@@ -46,9 +46,11 @@ app.use(helmet({
       'default-src': ["'self'"],
       // GSAP + ScrollTrigger, pinned with SRI in the landing pages.
       'script-src': ["'self'", 'https://cdnjs.cloudflare.com'],
-      // shared/fonts.css @imports the Google Fonts stylesheet.
-      'style-src': ["'self'", 'https://fonts.googleapis.com'],
-      'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      // Les polices sont servies par l'application (`public/fonts/`) : plus
+      // aucune origine tierce n'est nécessaire pour le style ni pour les
+      // fichiers de police. Ce qui n'est pas autorisé ne peut pas fuir.
+      'style-src': ["'self'"],
+      'font-src': ["'self'", 'data:'],
       // data: covers the QR shown on the invitation page.
       'img-src': ["'self'", 'data:'],
       'connect-src': ["'self'"],
@@ -74,7 +76,27 @@ app.use(logger('dev'));
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: false, limit: '16kb' }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+/**
+ * `redirect: false` : sans lui, `express.static` voit le dossier `public/v1`
+ * et répond 301 vers `/v1/` AVANT que la route explicite de `routes/index.js`
+ * ne soit consultée. Le lien que l'invité reçoit sur WhatsApp est `/v1` : il
+ * payait donc un aller-retour de plus, et `GET /` en payait deux (302 → 301 →
+ * 200). En 3G lent, chaque aller-retour coûte environ deux secondes avant le
+ * premier octet de HTML.
+ *
+ * Les polices ont une empreinte stable et un nom de fichier versionné par leur
+ * contenu : un cache long évite de les retélécharger à chaque visite. Le reste
+ * garde `max-age=0` — les assets ne portent pas de hash et doivent pouvoir
+ * changer au déploiement suivant.
+ */
+app.use(express.static(path.join(__dirname, 'public'), {
+  redirect: false,
+  setHeaders: function (res, filePath) {
+    if (/\.woff2?$/.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // Session only on /admin/* — a guest confirming their presence has no reason
 // to be given a session cookie, and it keeps the store free of anonymous rows.

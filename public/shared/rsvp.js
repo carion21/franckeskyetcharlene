@@ -82,6 +82,89 @@ window.WeddingRSVP = (function () {
     input.addEventListener('paste', function () { window.setTimeout(apply, 0); });
   }
 
+  /* ── Filet de sécurité des révélations ─────────────────────────────── */
+
+  /**
+   * Rien ne doit rester invisible une fois passé sous les yeux de l'invité.
+   *
+   * La chorégraphie révèle chaque bloc avec `gsap.from(..., opacity: 0)` : GSAP
+   * pose donc `opacity: 0` en ligne tout de suite et ne le relâche qu'au
+   * déclenchement du ScrollTrigger. Ces déclencheurs sont posés `once: true` —
+   * s'ils sont tués ou recalculés au mauvais moment (redimensionnement pendant
+   * une animation, scroll très rapide de haut en bas puis retour), le bloc
+   * n'est jamais révélé et reste à `opacity: 0` DÉFINITIVEMENT.
+   *
+   * Reproduit : 10 allers-retours haut/bas rapides puis 390 → 1280 → 390 laisse
+   * le lien WhatsApp et le pied de page invisibles sur /v1 et /v2. Le lien
+   * WhatsApp est le seul recours de l'invité qui n'arrive pas à remplir le
+   * formulaire : le perdre, c'est un appel au couple.
+   *
+   * Ce balayage ne devine rien : il ne touche qu'un élément déjà entré dans le
+   * viewport depuis plus que la durée d'une révélation, et jamais un élément
+   * masqué volontairement par `hidden`. Il retire les styles en ligne posés par
+   * GSAP, ce qui rend l'élément à son état CSS — visible.
+   */
+  // Les ENFANTS animés comptent autant que leurs conteneurs : sur /v2 le lever
+  // d'acte anime `.act__name` et `[data-act-rule]` à l'intérieur d'un
+  // `[data-act-head]` qui, lui, reste visible. Surveiller le seul parent
+  // laissait « CLÔTURE » invisible indéfiniment.
+  var REVEALABLE = '[data-reveal],[data-field],[data-submit],[data-act-head],' +
+                   '.act__name,[data-act-rule],[data-numeral],' +
+                   '[data-dot],[data-split],.hero__rule,' +
+                   '.hero__place,.countdown,.done__link';
+  // Les révélations durent 0,5 à 0,9 s : au-delà de 1,1 s dans le viewport, un
+  // élément encore invisible n'est plus « en train d'apparaître », il est perdu.
+  var GRACE_MS = 1100;
+
+  function initRevealGuard() {
+    var seenAt = new WeakMap();
+
+    function sweep() {
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      var now = Date.now();
+
+      Array.prototype.forEach.call(document.querySelectorAll(REVEALABLE), function (node) {
+        if (node.hasAttribute('hidden')) return;          // masqué à dessein
+        if (node.closest('[hidden]')) return;
+
+        var box = node.getBoundingClientRect();
+        var entered = box.top < vh && box.bottom > 0;
+        if (!entered) { seenAt.delete(node); return; }
+
+        var first = seenAt.get(node);
+        if (!first) { seenAt.set(node, now); return; }
+        if (now - first < GRACE_MS) return;
+
+        var computed = window.getComputedStyle(node);
+        if (parseFloat(computed.opacity) > 0.01 && computed.visibility !== 'hidden') return;
+
+        // Rendre l'élément à son état CSS : c'est le JS qui l'avait masqué.
+        node.style.opacity = '';
+        node.style.visibility = '';
+        node.style.transform = '';
+        node.style.translate = '';
+        node.style.scale = '';
+        node.style.rotate = '';
+      });
+    }
+
+    var pending = null;
+    function schedule() {
+      if (pending) return;
+      pending = window.setTimeout(function () { pending = null; sweep(); }, 250);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    window.addEventListener('orientationchange', schedule);
+    window.addEventListener('load', schedule);
+    // Un balayage de fin de parcours : l'invité qui s'arrête en bas de page a
+    // droit à une page entière, même s'il n'a plus rien à faire défiler. Une
+    // seconde de période borne la correction à ~2 s après l'arrivée du bloc.
+    window.setInterval(sweep, 1000);
+    schedule();
+  }
+
   /* ── Compte à rebours ──────────────────────────────────────────────── */
   function initCountdown() {
     var root = document.querySelector('[data-countdown]');
@@ -302,5 +385,17 @@ window.WeddingRSVP = (function () {
     });
   }
 
-  return { initCountdown: initCountdown, initForm: initForm };
+  // Le filet s'arme seul : il protège la page même si une version oublie de
+  // l'appeler, et il ne dépend pas de GSAP.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRevealGuard);
+  } else {
+    initRevealGuard();
+  }
+
+  return {
+    initCountdown: initCountdown,
+    initForm: initForm,
+    initRevealGuard: initRevealGuard
+  };
 })();

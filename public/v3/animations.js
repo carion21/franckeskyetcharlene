@@ -127,6 +127,7 @@
         opacity: 0,
         duration: 0.5,
         ease: 'back.out(2)',
+        clearProps: 'opacity,transform,translate,scale,rotate',
         scrollTrigger: { trigger: dot.closest('.bead'), start: 'top 72%', once: true }
       });
     });
@@ -144,6 +145,11 @@
         y: 12,
         duration: 0.9,
         ease: 'power2.out',
+        // Rend ses styles en ligne une fois joué : l'élément retourne à son
+        // état CSS et aucun recalcul de ScrollTrigger ne peut plus le laisser
+        // à opacity:0. Cause racine des blocs jamais révélés (scroll violent
+        // puis redimensionnement).
+        clearProps: 'opacity,transform,translate,scale,rotate',
         scrollTrigger: { trigger: bead, start: 'top 80%', once: true }
       });
     });
@@ -162,6 +168,11 @@
         y: 26,
         duration: 0.9,
         ease: 'power2.out',
+        // Une fois révélé, l'élément rend ses styles en ligne : il retourne à
+        // son état CSS, et aucun recalcul de ScrollTrigger ne peut plus le
+        // rendre invisible. C'est la cause racine des blocs jamais révélés
+        // après un scroll violent suivi d'un redimensionnement.
+        clearProps: 'opacity,transform,translate,scale,rotate',
         scrollTrigger: { trigger: node, start: 'top 88%', once: true }
       });
     });
@@ -198,6 +209,7 @@
         duration: 0.7,
         ease: 'power2.out',
         stagger: 0.09,
+        clearProps: 'opacity,transform,translate,scale,rotate',
         scrollTrigger: { trigger: '.rsvp', start: 'top 78%', once: true }
       });
     }
@@ -209,6 +221,12 @@
     playHero();
     playSpine();
     playReveals();
+    // `shared/rsvp.js` peut manquer (chargement interrompu, proxy). Sans cette
+    // garde, `init()` levait « WeddingRSVP is not defined » et la ligne
+    // suivante — donc le compte à rebours et le formulaire — ne s'exécutait
+    // jamais, en laissant l'erreur remonter non traitée dans la console.
+    if (!window.WeddingRSVP) return;
+
     WeddingRSVP.initCountdown();
     WeddingRSVP.initForm({
       onDone: function (done) {

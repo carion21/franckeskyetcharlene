@@ -18,14 +18,17 @@
 
   /* Teintes de contraste — l'or pur reste réservé à l'ornement (§2.1 : « accent
      décoratif »), qui n'a besoin que de 3:1. Pour du *texte* de petite taille,
-     l'or pur échoue au niveau AA et ces deux teintes prennent le relais :
-       --gold  #C9A227 sur crème   → 2.34:1  ✗
-       --gold  #C9A227 sur émeraude→ 3.07:1  ✗
-       --gold-on-cream   #8A6F14  → 4.65:1  ✓ AA
-       --gold-on-emerald #E4C766  → 4.48:1  ✓ AA (arrondi)
-       --on-gold         #2B2308  → 6.45:1  ✓ AA sur un fond or */
-  --gold-on-cream: #8a6f14;
-  --gold-on-emerald: #e4c766;
+     l'or pur échoue au niveau AA et ces deux teintes prennent le relais.
+     Ratios recalculés, sans arrondi de complaisance : le seuil AA est 4.5:1, et
+     4.48:1 est un échec, pas un succès arrondi.
+       --gold  #C9A227 sur crème    → 2.34:1  ✗
+       --gold  #C9A227 sur émeraude → 3.07:1  ✗
+       --gold-on-cream   #806712   → 5.25:1  ✓ AA (4.94:1 sur le crème voilé
+                                     de /v2, #F3F5EF — la marge sert à ça)
+       --gold-on-emerald #E8CD74   → 4.74:1  ✓ AA
+       --on-gold         #2B2308   → 6.45:1  ✓ AA sur un fond or */
+  --gold-on-cream: #806712;
+  --gold-on-emerald: #e8cd74;
   --on-gold: #2b2308;
 
   /* Rhythm */
@@ -43,6 +46,17 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* `hidden` doit l'emporter sur toute règle de disposition.
+   Sans cela, `element.hidden = true` ne cache RIEN dès que le CSS pose un
+   `display` : `.countdown { display: flex }` gagnait, et le compte à rebours
+   restait affiché « 00 JOURS 00 HEURES 00 MIN 00 SEC » à côté de « Le grand
+   jour est arrivé. » — c'est-à-dire à partir du 10 octobre 2026 à 10h00, le
+   jour où la page compte le plus. La même règle protège `.field__error`,
+   le formulaire et l'écran de confirmation, qui reposent tous sur `hidden`. */
+[hidden] {
+  display: none !important;
 }
 
 body {

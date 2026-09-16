@@ -127,7 +127,17 @@
       var rule = head.querySelector('[data-act-rule]');
 
       var timeline = gsap.timeline({
-        scrollTrigger: { trigger: head, start: 'top 82%', once: true }
+        scrollTrigger: { trigger: head, start: 'top 82%', once: true },
+        // Le lever d'acte laissait son titre à `opacity: 0` après un scroll
+        // violent suivi d'un redimensionnement : « CLÔTURE » — et donc le bloc
+        // qui porte le numéro WhatsApp — ne revenait jamais. Chaque tween rend
+        // ses styles en ligne une fois joué, l'élément retourne à son état CSS.
+        onComplete: function () {
+          gsap.set([numeral, name, rule].filter(Boolean), {
+            clearProps: 'opacity,transform,translate,scale,rotate'
+          });
+          // Le chiffre d'acte garde son opacité d'ornement, portée par le CSS.
+        }
       });
 
       if (numeral) {
@@ -157,6 +167,11 @@
         y: 24,
         duration: 0.9,
         ease: 'power2.out',
+        // Rend ses styles en ligne une fois joué : l'élément retourne à son
+        // état CSS et aucun recalcul de ScrollTrigger ne peut plus le laisser
+        // à opacity:0. Cause racine des blocs jamais révélés (scroll violent
+        // puis redimensionnement).
+        clearProps: 'opacity,transform,translate,scale,rotate',
         scrollTrigger: { trigger: node, start: 'top 88%', once: true }
       });
     });
@@ -209,6 +224,7 @@
         duration: 0.7,
         ease: 'power2.out',
         stagger: 0.09,
+        clearProps: 'opacity,transform,translate,scale,rotate',
         scrollTrigger: { trigger: '.form', start: 'top 82%', once: true }
       });
     }
@@ -220,6 +236,12 @@
     playHero();
     playActHeads();
     playReveals();
+    // `shared/rsvp.js` peut manquer (chargement interrompu, proxy). Sans cette
+    // garde, `init()` levait « WeddingRSVP is not defined » et la ligne
+    // suivante — donc le compte à rebours et le formulaire — ne s'exécutait
+    // jamais, en laissant l'erreur remonter non traitée dans la console.
+    if (!window.WeddingRSVP) return;
+
     WeddingRSVP.initCountdown();
     WeddingRSVP.initForm({
       onDone: function (done) {

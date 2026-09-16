@@ -26,16 +26,36 @@
 <meta name="twitter:description" content="Franckesky et Charlène vous convient à célébrer leur union, le samedi 10 octobre 2026 à Abidjan. Confirmez votre présence.">
 <meta name="twitter:image" content="https://franckeskyetcharlene.geasscorp.com/images/og-cover.jpg">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
+
+<!-- Les polices sont servies par l'application (cf. /shared/fonts.css) : plus
+     aucun aller-retour vers Google avant le premier pixel.
+
+     Et surtout : AUCUN `preload` ici. Mesuré en 3G lent — précharger les
+     polices et la photo les fait passer en priorité haute DEVANT la feuille de
+     style, qui est la seule ressource qui bloque vraiment le rendu. Le LCP
+     passait de 6,2 s à 9,0 s. Avec `font-display: swap`, le texte s'affiche
+     tout de suite en police de repli : les fichiers peuvent arriver après, et
+     ils doivent arriver après. -->
 <link rel="stylesheet" href="/shared/fonts.css">
 <link rel="stylesheet" href="/shared/palette.css">
 <link rel="stylesheet" href="/v3/styles.css">
 </head>
 
 <body class="thread">
+
+<!-- Sans JavaScript, le formulaire n'a pas de destination : il faut le dire à
+     l'invité et lui donner le numéro, plutôt que de le laisser cliquer dans le
+     vide. -->
+<noscript>
+  <div class="noscript-note">
+    <p>La confirmation en ligne a besoin de JavaScript. Vous pouvez aussi nous
+    confirmer votre présence par WhatsApp&nbsp;:
+    <a href="https://wa.me/2250709898475">0709&nbsp;89&nbsp;84&nbsp;75</a>.</p>
+  </div>
+</noscript>
+
 
 <!-- ── Ouverture : monogramme puis fil qui descend ─────────────────────── -->
 <div class="overlay" data-overlay>
