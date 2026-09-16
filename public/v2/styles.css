@@ -134,19 +134,28 @@
   background-color: var(--emerald-light);
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
-    url('/shared/img/couple.jpg');
+    url('/images/couple.jpeg');
   background-size: cover;
   /* Photo portrait, visages dans le tiers haut : on ancre le cadrage en haut
      pour ne pas les rogner sur un viewport large. */
   background-position: center 22%;
-  opacity: 0.5;
+  /* Assez présente pour qu'on reconnaisse le couple — la lisibilité vient du
+     voile, pas de l'effacement de l'image. */
+  opacity: 0.92;
   will-change: transform;
 }
 
 .hero__veil {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(4, 98, 65, 0.5), rgba(2, 56, 35, 0.9));
+  /* Voile modulé : discret sur les visages, plus dense derrière le texte. */
+  background:
+    linear-gradient(180deg,
+      rgba(2, 56, 35, 0.55) 0%,
+      rgba(2, 56, 35, 0.28) 22%,
+      rgba(2, 56, 35, 0.62) 46%,
+      rgba(2, 56, 35, 0.80) 72%,
+      rgba(2, 56, 35, 0.92) 100%);
 }
 
 .hero__inner { position: relative; z-index: 1; }
