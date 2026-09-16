@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirmations — Backoffice</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/shared/fonts.css">
+<link rel="stylesheet" href="/shared/palette.css">
+<link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+
+<body class="admin">
+
+<header class="topbar">
+  <div class="topbar__left">
+    <span class="topbar__mark t-script">F &amp; C</span>
+    <span class="topbar__title t-label">Confirmations</span>
+  </div>
+  <form class="topbar__right" method="post" action="/admin/logout">
+    <span class="topbar__user t-label"><%= adminUsername %></span>
+    <button class="btn btn--ghost t-label" type="submit">Déconnexion</button>
+  </form>
+</header>
+
+<main class="admin__wrap">
+
+  <section class="stats" aria-label="Récapitulatif">
+    <div class="stat">
+      <span class="stat__value"><%= stats.total %></span>
+      <span class="stat__label t-label">Confirmations</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value"><%= stats.personnes %></span>
+      <span class="stat__label t-label">Personnes attendues</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value"><%= stats.accompagnes %></span>
+      <span class="stat__label t-label">Accompagnés</span>
+    </div>
+    <% if (stats.cartesManquantes > 0) { %>
+      <%# Visible seulement s'il y a réellement un problème : une carte non
+          générée se régénère à la demande, mais mieux vaut le savoir. %>
+      <div class="stat stat--warn">
+        <span class="stat__value"><%= stats.cartesManquantes %></span>
+        <span class="stat__label t-label">Cartes à régénérer</span>
+      </div>
+    <% } %>
+  </section>
+
+  <% if (rsvps.length === 0) { %>
+    <p class="empty t-verse">Aucune confirmation pour l'instant.</p>
+  <% } else { %>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Nom</th>
+            <th scope="col">Email</th>
+            <th scope="col">Téléphone</th>
+            <th scope="col">Accompagné</th>
+            <th scope="col">Relation</th>
+            <th scope="col">Confirmé le</th>
+            <th scope="col"><span class="u-visually-hidden">Carte</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rsvps.forEach(function (r) { %>
+            <tr>
+              <td data-label="Nom"><%= r.prenom %> <%= r.nom %></td>
+              <td data-label="Email"><a href="mailto:<%= r.email %>"><%= r.email %></a></td>
+              <td data-label="Téléphone"><a href="tel:<%= r.telephone %>"><%= r.telephone %></a></td>
+              <td data-label="Accompagné"><%= r.accompagne ? 'Oui' : 'Non' %></td>
+              <td data-label="Relation">
+                <%
+                  var LABELS = {
+                    PARENT_MARIE: 'Parent du marié',
+                    AMI_MARIE: 'Ami(e) du marié',
+                    PARENT_MARIEE: 'Parent de la mariée',
+                    AMI_MARIEE: 'Ami(e) de la mariée'
+                  };
+                %>
+                <%= LABELS[r.relation] || r.relation %>
+              </td>
+              <td data-label="Confirmé le">
+                <%# Affiché à l'heure d'Abidjan : c'est le repère de l'organisateur. %>
+                <%= r.createdAt.toLocaleString('fr-FR', {
+                      timeZone: 'Africa/Abidjan',
+                      day: '2-digit', month: '2-digit', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    }) %>
+              </td>
+              <td data-label="Carte" class="table__actions">
+                <%# Réutilise GET /api/card/:id (FC-019), qui régénère à la
+                    volée si la carte manque — d'où l'absence de bouton séparé. %>
+                <a class="btn btn--gold btn--small t-label" href="/api/card/<%= r.id %>">
+                  Carte
+                </a>
+                <a class="btn btn--small btn--ghost t-label" href="/invitation/<%= r.id %>" target="_blank" rel="noopener">
+                  Page
+                </a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+
+  <% } %>
+
+</main>
+
+</body>
+</html>

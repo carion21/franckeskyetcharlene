@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion — Backoffice</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/shared/fonts.css">
+<link rel="stylesheet" href="/shared/palette.css">
+<link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+
+<body class="admin admin--centered">
+
+<main class="login">
+  <header class="login__head">
+    <p class="login__mark t-script">F &amp; C</p>
+    <h1 class="login__title t-label">Backoffice</h1>
+  </header>
+
+  <% if (error) { %>
+    <%# Message unique quelle que soit la cause : ne jamais révéler si le
+        compte existe (PRD §6). %>
+    <p class="alert" role="alert"><%= error %></p>
+  <% } %>
+
+  <form class="login__form" method="post" action="/admin/login">
+    <div class="field">
+      <label class="field__label t-label" for="username">Identifiant</label>
+      <input class="field__input" id="username" name="username" type="text"
+             value="<%= username %>" autocomplete="username" required autofocus>
+    </div>
+
+    <div class="field">
+      <label class="field__label t-label" for="password">Mot de passe</label>
+      <input class="field__input" id="password" name="password" type="password"
+             autocomplete="current-password" required>
+    </div>
+
+    <button class="btn btn--gold t-label" type="submit">Se connecter</button>
+  </form>
+</main>
+
+</body>
+</html>

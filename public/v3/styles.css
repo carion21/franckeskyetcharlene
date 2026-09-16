@@ -1,0 +1,518 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   /v3 — « Fil Doré »
+   Un seul fil doré traverse la page de haut en bas et se remplit au scroll.
+   Le récit s'y accroche en alternance gauche/droite, chaque étape marquée
+   par une perle sur le fil. Là où /v1 enchaîne et /v2 découpe en actes,
+   /v3 raconte une ligne continue.
+   Sous 860px le fil passe à gauche et les cartes s'empilent : le tracé
+   reste lisible sans compresser le texte.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Ouverture ───────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--emerald), var(--emerald-deep));
+  animation: overlay-dismiss 0.9s var(--ease-out) 2.4s forwards;
+}
+
+@keyframes overlay-dismiss {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+.overlay[hidden] { display: none; }
+
+.overlay__mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.overlay__initials { font-size: 54px; color: var(--cream); }
+
+.overlay__drop { width: 4px; height: 44px; margin-top: 8px; }
+.overlay__drop line { stroke: var(--gold); stroke-width: 2; }
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 92svh;
+  display: grid;
+  place-items: center;
+  padding: 90px var(--gutter) 70px;
+  overflow: hidden;
+  background: var(--emerald);
+  color: var(--cream);
+  text-align: center;
+}
+
+.hero__photo {
+  position: absolute;
+  inset: 0;
+  background-color: var(--emerald-light);
+  background-image:
+    radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
+    url('/shared/img/couple.jpg');
+  background-size: cover;
+  /* Photo portrait, visages dans le tiers haut : on ancre le cadrage en haut
+     pour ne pas les rogner sur un viewport large. */
+  background-position: center 22%;
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4, 98, 65, 0.5), rgba(2, 56, 35, 0.9));
+}
+
+.hero__inner { position: relative; z-index: 1; }
+
+.hero__names { margin: 0; font-size: clamp(42px, 9vw, 78px); color: var(--cream); }
+.hero__names .char { display: inline-block; white-space: pre; }
+
+.hero__rule { width: 120px; height: 2px; margin: 16px auto 0; background: var(--gold); }
+.hero__place { margin: 16px 0 0; color: var(--gold-on-emerald); letter-spacing: 0.22em; }
+
+.countdown {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.countdown__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 56px;
+}
+
+.countdown__num {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(28px, 7vw, 32px);
+  font-variant-numeric: tabular-nums;
+  color: var(--cream);
+}
+
+.countdown__lbl { color: var(--gold-on-emerald); font-size: 0.62rem; }
+.countdown__passed { margin-top: 40px; color: var(--gold-on-emerald); font-style: italic; }
+
+/* Amorce du fil : il sort du hero et se prolonge dans la section suivante. */
+.hero__thread-start {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  background: var(--gold);
+  transform: translateX(-50%);
+}
+
+/* ── Le fil ──────────────────────────────────────────────────────────── */
+.spine {
+  position: relative;
+  padding: clamp(70px, 11vw, 110px) var(--gutter);
+  background: var(--cream);
+}
+
+/* Rail gris clair, toujours visible : il annonce le chemin restant. */
+.spine__line,
+.spine__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+}
+
+.spine__line { background: rgba(4, 98, 65, 0.14); }
+
+/* Remplissage doré, piloté au scroll (scaleY 0 → 1). */
+.spine__fill {
+  background: linear-gradient(var(--emerald), var(--gold), var(--emerald));
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: top center;
+}
+
+.beads {
+  position: relative;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(48px, 8vw, 84px);
+}
+
+.bead {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bead--left { justify-content: flex-start; }
+.bead--right { justify-content: flex-end; }
+
+.bead__card {
+  width: min(42%, 420px);
+  padding: 4px 0;
+}
+
+.bead--left .bead__card { padding-right: 46px; text-align: right; }
+.bead--right .bead__card { padding-left: 46px; }
+
+/* Perle sur le fil, alignée au centre de la carte. */
+.bead__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  background: var(--cream);
+  transform: translate(-50%, -50%);
+}
+
+.bead__eyebrow { margin: 0; color: var(--gold-on-cream); font-size: 0.7rem; letter-spacing: 0.16em; }
+
+.bead__text {
+  margin: 12px 0 0;
+  font-size: 1.04rem;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.bead__card--verse { border-left: 1.4px solid var(--gold); padding-left: 46px; }
+
+.bead--left .bead__card--verse {
+  border-left: 0;
+  border-right: 1.4px solid var(--gold);
+  padding-right: 46px;
+}
+
+.bead__verse {
+  margin: 12px 0 0;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--emerald);
+}
+
+.bead__ref { margin: 10px 0 0; color: var(--emerald); opacity: 0.7; font-size: 0.66rem; }
+
+.bead__card--step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.bead--left .bead__card--step { flex-direction: row-reverse; text-align: right; }
+
+.step__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1.3px solid var(--gold);
+  border-radius: 50%;
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.step__icon svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bead__place { margin: 3px 0 0; font-size: 1.04rem; color: var(--ink); }
+
+.dress__title { margin: 8px 0 0; font-size: clamp(26px, 6vw, 30px); color: var(--emerald); }
+.dress__sub { margin: 4px 0 0; font-size: 0.96rem; }
+
+.dress__swatches {
+  display: flex;
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bead--left .dress__swatches { justify-content: flex-end; }
+
+.swatch {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.swatch--emerald { background: var(--emerald); border: 2px solid var(--cream); transform: rotate(-8deg); }
+.swatch--cream { background: var(--cream); border: 2px solid var(--emerald); transform: rotate(5deg); }
+.swatch--gold { background: var(--gold); border: 2px solid var(--cream); transform: rotate(-3deg); }
+
+/* Sous 860px : le fil se range à gauche, les cartes prennent la largeur. */
+@media (max-width: 860px) {
+  .spine__line,
+  .spine__fill { left: 20px; }
+
+  .spine__fill { transform: translateX(-50%) scaleY(0); }
+
+  .bead { justify-content: flex-start; }
+
+  .bead__card,
+  .bead--left .bead__card,
+  .bead--right .bead__card {
+    width: 100%;
+    padding: 0 0 0 52px;
+    text-align: left;
+  }
+
+  .bead--left .bead__card--verse,
+  .bead__card--verse {
+    border-right: 0;
+    border-left: 1.4px solid var(--gold);
+    padding-left: 52px;
+  }
+
+  .bead--left .bead__card--step { flex-direction: row; text-align: left; }
+  .bead--left .dress__swatches { justify-content: flex-start; }
+
+  .bead__dot { left: 20px; }
+}
+
+/* ── Climax ──────────────────────────────────────────────────────────── */
+.climax {
+  position: relative;
+  padding: clamp(80px, 12vw, 120px) var(--gutter);
+  background: linear-gradient(160deg, var(--emerald-deep), var(--emerald-darkest));
+  color: var(--cream);
+  text-align: center;
+}
+
+.climax__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+/* Le fil aboutit ici : un anneau, promesse du mariage. */
+.climax__ring {
+  width: 70px;
+  height: 70px;
+  border: 1.8px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px rgba(201, 162, 39, 0.16), 0 0 0 17px rgba(201, 162, 39, 0.07);
+}
+
+.climax__spark {
+  position: absolute;
+  top: 4%;
+  right: 16%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  opacity: 0;
+  box-shadow: 0 0 12px 3px rgba(228, 199, 102, 0.55);
+}
+
+.climax__kicker { margin: 6px 0 0; font-size: clamp(28px, 7.5vw, 36px); color: var(--gold-light); }
+
+.climax__title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(21px, 5.5vw, 26px);
+  color: var(--cream);
+}
+
+/* ── RSVP ────────────────────────────────────────────────────────────── */
+.rsvp {
+  padding: clamp(70px, 11vw, 100px) var(--gutter) clamp(90px, 13vw, 120px);
+  background: var(--emerald);
+  color: var(--cream);
+}
+
+.rsvp__inner { max-width: 500px; margin: 0 auto; }
+
+.form { display: flex; flex-direction: column; gap: 20px; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field--group { gap: 10px; }
+
+.field__label {
+  padding: 0;
+  color: var(--gold-on-emerald);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+}
+
+.field__input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.3px solid rgba(253, 251, 246, 0.35);
+  border-radius: 6px;
+  background: rgba(253, 251, 246, 0.08);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 1.02rem;
+  transition: border-color var(--dur-mid) var(--ease-out);
+}
+
+.field__input:focus { border-color: var(--gold); outline: none; }
+.field__input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.field__input[aria-invalid='true'] { border-color: var(--gold-light); }
+
+.field__error { margin: 0; font-style: italic; font-size: 0.85rem; color: var(--gold-light); }
+
+.pills { display: flex; gap: 12px; }
+.pills--wrap { flex-wrap: wrap; }
+
+.pill { cursor: pointer; }
+
+.pill input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.pill span {
+  display: inline-block;
+  padding: 10px 18px;
+  border: 1.5px solid rgba(253, 251, 246, 0.35);
+  border-radius: 30px;
+  color: var(--cream);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background var(--dur-mid) var(--ease-out),
+              color var(--dur-mid) var(--ease-out),
+              border-color var(--dur-mid) var(--ease-out);
+}
+
+.pill input:checked + span {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.pill input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+.submit {
+  margin-top: 8px;
+  min-height: 56px;
+  padding: 18px 32px;
+  border: none;
+  border-radius: 60px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--on-gold);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.submit[disabled] { opacity: 0.72; cursor: progress; }
+
+.form__status {
+  margin: 0;
+  min-height: 1.2em;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--gold-light);
+  text-align: center;
+}
+
+.done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.done[hidden] { display: none; }
+
+.done__check {
+  width: 52px;
+  height: 52px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.done__text { max-width: 400px; margin: 0; font-size: 1.15rem; color: var(--cream); }
+.done__link { color: var(--gold-on-emerald); }
+
+/* ── Contact ─────────────────────────────────────────────────────────── */
+.contact {
+  padding: clamp(60px, 9vw, 80px) var(--gutter);
+  background: var(--cream);
+  text-align: center;
+}
+
+.contact__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  border: 1.3px solid var(--emerald);
+  border-radius: 40px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.contact__icon { width: 24px; height: 24px; fill: var(--emerald); }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.footer {
+  padding: clamp(70px, 10vw, 90px) var(--gutter) 60px;
+  background: linear-gradient(160deg, var(--emerald), var(--emerald-deep));
+  text-align: center;
+}
+
+.footer__mark { margin: 0; font-size: 44px; color: var(--cream); }
+.footer__date { margin: 14px 0 0; color: var(--gold-on-emerald); letter-spacing: 0.3em; }
+
+/* ── Accessibilité : mouvement réduit ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .overlay { display: none; }
+
+  [data-reveal],
+  [data-dot],
+  .hero__names .char {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* La perle garde son centrage : `transform:none` la décalerait. */
+  .bead__dot { transform: translate(-50%, -50%) !important; }
+
+  .spine__fill { transform: translateX(-50%) scaleY(1); }
+  .hero__photo { transform: none !important; }
+}

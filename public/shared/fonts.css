@@ -1,0 +1,43 @@
+/* Typography shared by /v1, /v2 and /v3 — PRD §2.2.
+   The font stack is byte-identical across the three wireframes, so it is
+   factored here. Loaded from Google Fonts, same source as the wireframes.
+
+   Great Vibes        → prénoms, titres script dorés
+   Cormorant Garamond → corps de texte, sous-titres
+   Cormorant SemiBold → labels, heures, boutons (small caps, letter-spacing large) */
+
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant:wght@500;600;700&display=swap');
+
+:root {
+  --font-script: 'Great Vibes', 'Segoe Script', 'Brush Script MT', cursive;
+  --font-body: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-label: 'Cormorant', 'Cormorant Garamond', Georgia, serif;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: clamp(17px, 1.05rem + 0.2vw, 19px);
+  line-height: 1.8;
+}
+
+/* Script display type — the couple's names, the monogram, the climax line. */
+.t-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+/* Small-caps label with wide tracking — hours, eyebrows, buttons. */
+.t-label {
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.t-verse {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+}

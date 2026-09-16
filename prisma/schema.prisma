@@ -1,0 +1,31 @@
+// Prisma schema — see https://pris.ly/d/prisma-schema
+// Models mirror PRD §7.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Rsvp {
+  id           String   @id @default(uuid()) // public reference, used in the URL and the QR code
+  nom          String
+  prenom       String
+  accompagne   Boolean  @default(false)
+  relation     String // "PARENT_MARIE" | "AMI_MARIE" | "PARENT_MARIEE" | "AMI_MARIEE"
+  email        String   @unique
+  telephone    String
+  icsDeclenche Boolean  @default(false)
+  cardMinioKey String?
+  createdAt    DateTime @default(now())
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}

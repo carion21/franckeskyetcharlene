@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Invitation — Franckesky &amp; Charlène</title>
+<%#
+  CARTE D'INVITATION INDIVIDUELLE — A5 portrait (148 × 210 mm)
+  Reprise de designs/Template invitation mariage A5/invitation-mariage.html
+  (structure, ornements, esprit) — exécution soignée, pas un décalque (PRD §0).
+
+  Rendu serveur par services/pdf.service.js (Puppeteer). Entièrement autonome :
+  polices en base64, QR en SVG inline, aucun appel réseau au moment du rendu.
+
+  Variables attendues :
+    nom, prenom   → « Cette invitation est réservée à {prenom} {nom} »
+    qrSvg         → markup SVG du QR (services/qrcode.service.js)
+    fonts         → { greatVibes, cormorantGaramond, cormorantGaramondItalic, cormorant }
+                    chaînes base64 woff2
+    dateMariage   → libellé affiché sous les prénoms
+%>
+<style>
+  /* ── POLICES ───────────────────────────────────────────────────────────
+     Embarquées en base64 : Chromium headless n'a aucune de ces polices
+     installées, et sans elles le rendu retomberait sur Georgia/cursive —
+     ce qui détruirait le dessin de la carte. Aucun accès réseau requis. */
+  @font-face {
+    font-family: 'Great Vibes';
+    font-style: normal; font-weight: 400; font-display: block;
+    src: url('data:font/woff2;base64,<%= fonts.greatVibes %>') format('woff2');
+  }
+  /* Police variable (wght 300–700, défaut 300) : la plage doit être déclarée,
+     sinon 400 et 600 ne s'interpolent pas et le texte rend trop maigre. */
+  @font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: normal; font-weight: 300 700; font-display: block;
+    src: url('data:font/woff2;base64,<%= fonts.cormorantGaramond %>') format('woff2');
+  }
+  @font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: italic; font-weight: 400; font-display: block;
+    src: url('data:font/woff2;base64,<%= fonts.cormorantGaramondItalic %>') format('woff2');
+  }
+  @font-face {
+    font-family: 'Cormorant';
+    font-style: normal; font-weight: 600; font-display: block;
+    src: url('data:font/woff2;base64,<%= fonts.cormorant %>') format('woff2');
+  }
+
+  /* ── PAGE ──────────────────────────────────────────────────────────── */
+  @page { size: 148mm 210mm; margin: 0; }
+
+  html, body {
+    margin: 0; padding: 0;
+    width: 148mm; height: 210mm;
+    background: #046241;
+  }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .card {
+    position: relative;
+    width: 148mm; height: 210mm;
+    overflow: hidden;
+    background: #046241;
+    color: #FDFBF6;
+    text-align: center;
+  }
+
+  .vignette {
+    position: absolute; top: 0; left: 0;
+    width: 148mm; height: 210mm;
+    background: radial-gradient(112mm 128mm at 50% 38%, #06764F 0%, #046241 58%, #023A27 100%);
+  }
+
+  /* ── CADRE ART DÉCO ────────────────────────────────────────────────── */
+  .frame-outer {
+    position: absolute; top: 7mm; left: 7mm;
+    width: 132.6mm; height: 194.6mm;
+    border: 0.7mm solid #C9A227;
+  }
+  .frame-inner {
+    position: absolute; top: 9.4mm; left: 9.4mm;
+    width: 128.6mm; height: 190.6mm;
+    border: 0.25mm solid rgba(201, 162, 39, 0.55);
+  }
+  .corner { position: absolute; width: 30mm; height: 30mm; }
+  .corner-tl { top: 7mm;  left: 7mm; }
+  .corner-tr { top: 7mm;  right: 7mm;  transform: scaleX(-1); }
+  .corner-bl { bottom: 7mm; left: 7mm;  transform: scaleY(-1); }
+  .corner-br { bottom: 7mm; right: 7mm; transform: scale(-1, -1); }
+
+  .arch {
+    position: absolute; left: 50%;
+    width: 46mm; height: 9mm;
+    margin-left: -23mm;
+  }
+  .arch-top    { top: 6.1mm; }
+  .arch-bottom { bottom: 6.1mm; transform: scaleY(-1); }
+
+  /* ── CONTENU ───────────────────────────────────────────────────────── */
+  .content {
+    position: absolute; top: 0; left: 0;
+    width: 148mm; height: 210mm;
+    padding: 12mm 19mm 12mm;
+    box-sizing: border-box;
+  }
+
+  .eyebrow {
+    font-family: 'Great Vibes', cursive;
+    font-size: 23pt; line-height: 1.05;
+    color: #E8CE7A;
+    margin: 0;
+  }
+
+  .rule { margin: 2.4mm auto 0; width: 50mm; height: 3mm; }
+
+  .verse {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic; font-weight: 400;
+    font-size: 9.6pt; line-height: 1.5;
+    color: #FDFBF6;
+    margin: 2.8mm auto 0;
+    width: 96mm;
+    text-wrap: pretty;
+  }
+  .verse-ref {
+    display: block;
+    font-family: 'Cormorant', Georgia, serif;
+    font-style: normal; font-weight: 600;
+    font-variant: small-caps; font-size: 8.2pt;
+    letter-spacing: 0.22em;
+    color: #C9A227;
+    margin-top: 1.6mm;
+  }
+
+  .names {
+    font-family: 'Great Vibes', cursive;
+    font-size: 33pt; line-height: 1.06;
+    color: #E8CE7A;
+    margin: 3.2mm 0 0;
+    white-space: nowrap;
+  }
+  .names .amp {
+    font-size: 21pt;
+    color: #C9A227;
+    padding: 0 1mm;
+    vertical-align: 0.12em;
+  }
+
+  .date {
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 600; font-variant: small-caps;
+    font-size: 11pt; letter-spacing: 0.28em;
+    color: #FDFBF6;
+    margin: 1.6mm 0 0;
+    text-indent: 0.3em;
+  }
+
+  /* ── PROGRAMME ─────────────────────────────────────────────────────── */
+  .program {
+    width: 104mm;
+    margin: 3.4mm auto 0;
+    border-collapse: collapse;
+  }
+  .program td {
+    padding: 0.85mm 0;
+    vertical-align: top;
+    border-bottom: 0.2mm solid rgba(201, 162, 39, 0.34);
+  }
+  .program tr:last-child td { border-bottom: 0; }
+  .program .hour {
+    width: 24mm;
+    text-align: left;
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 600; font-variant: small-caps;
+    font-size: 10.8pt; letter-spacing: 0.16em;
+    color: #C9A227;
+    white-space: nowrap;
+  }
+  .program .event {
+    text-align: left;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    font-size: 10.6pt; line-height: 1.28;
+    color: #FDFBF6;
+  }
+  .program .venue {
+    display: block;
+    font-size: 8.6pt; font-style: italic;
+    color: #D8E8DF;
+    margin-top: 0.4mm;
+  }
+
+  .dress {
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 600; font-variant: small-caps;
+    font-size: 9.2pt; letter-spacing: 0.2em;
+    color: #E8CE7A;
+    margin: 3mm 0 0;
+    text-indent: 0.2em;
+  }
+
+  /* ── PERSONNALISATION NOMINATIVE ───────────────────────────────────── */
+  .guest {
+    width: 100mm;
+    margin: 3mm auto 0;
+    padding: 1.9mm 4mm 2mm;
+    box-sizing: border-box;
+    border-top: 0.2mm solid rgba(201, 162, 39, 0.5);
+    border-bottom: 0.2mm solid rgba(201, 162, 39, 0.5);
+  }
+  .guest-label {
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 600; font-variant: small-caps;
+    font-size: 8.2pt; letter-spacing: 0.24em;
+    color: #B9CFC3;
+    margin: 0;
+    text-indent: 0.24em;
+  }
+  /* Un nom long passe sur deux lignes plutôt que de déborder du filet. */
+  .guest-name {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600; font-size: 13.5pt; line-height: 1.2;
+    letter-spacing: 0.06em;
+    color: #FDFBF6;
+    margin: 1mm 0 0;
+    overflow-wrap: break-word;
+  }
+
+  /* ── QR CODE ───────────────────────────────────────────────────────── */
+  .qr-zone { margin: 3mm 0 0; }
+  .qr-box {
+    display: inline-block;
+    padding: 1.8mm;
+    border: 0.55mm solid #C9A227;
+    border-radius: 3mm;
+    background: #FDFBF6;
+    line-height: 0;
+  }
+  /* SVG inline : reste vectoriel dans le PDF, donc net à l'impression. */
+  .qr-box svg {
+    display: block;
+    width: 24mm; height: 24mm;
+    shape-rendering: crispEdges;
+  }
+  .qr-caption {
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 600; font-variant: small-caps;
+    font-size: 8.4pt; letter-spacing: 0.22em;
+    color: #E8CE7A;
+    margin: 1.6mm 0 0;
+    text-indent: 0.22em;
+  }
+
+  .contact {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+    font-size: 9.2pt; letter-spacing: 0.14em;
+    color: #B9CFC3;
+    margin: 2mm 0 0;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="vignette"></div>
+
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
+
+  <svg class="arch arch-top" viewBox="0 0 460 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 62 H150 A80 80 0 0 1 310 62 H460" stroke="#C9A227" stroke-width="5"/>
+    <path d="M0 78 H158 A72 72 0 0 1 302 78 H460" stroke="#C9A227" stroke-width="2" opacity="0.55"/>
+    <path d="M230 10 L243 30 L230 50 L217 30 Z" fill="#C9A227"/>
+    <path d="M230 22 L236 30 L230 38 L224 30 Z" fill="#046241"/>
+    <path d="M195 44 L205 30 L215 44" stroke="#C9A227" stroke-width="2.4"/>
+    <path d="M265 44 L255 30 L245 44" stroke="#C9A227" stroke-width="2.4"/>
+  </svg>
+
+  <svg class="arch arch-bottom" viewBox="0 0 460 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 62 H150 A80 80 0 0 1 310 62 H460" stroke="#C9A227" stroke-width="5"/>
+    <path d="M0 78 H158 A72 72 0 0 1 302 78 H460" stroke="#C9A227" stroke-width="2" opacity="0.55"/>
+    <path d="M230 10 L243 30 L230 50 L217 30 Z" fill="#C9A227"/>
+    <path d="M230 22 L236 30 L230 38 L224 30 Z" fill="#046241"/>
+    <path d="M195 44 L205 30 L215 44" stroke="#C9A227" stroke-width="2.4"/>
+    <path d="M265 44 L255 30 L245 44" stroke="#C9A227" stroke-width="2.4"/>
+  </svg>
+
+  <% for (var i = 0; i < 4; i++) { var pos = ['tl', 'tr', 'bl', 'br'][i]; %>
+  <svg class="corner corner-<%= pos %>" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 96 Q0 0 96 0" stroke="#C9A227" stroke-width="5"/>
+    <path d="M22 110 Q22 22 110 22" stroke="#C9A227" stroke-width="2" opacity="0.6"/>
+    <path d="M38 38 L38 78 M38 38 L78 38" stroke="#C9A227" stroke-width="4"/>
+    <path d="M56 56 Q120 56 150 26" stroke="#C9A227" stroke-width="2.2" opacity="0.85"/>
+    <path d="M56 56 Q56 120 26 150" stroke="#C9A227" stroke-width="2.2" opacity="0.85"/>
+    <path d="M96 60 Q120 40 148 44 Q126 68 96 60 Z" fill="#C9A227" opacity="0.9"/>
+    <path d="M60 96 Q40 120 44 148 Q68 126 60 96 Z" fill="#C9A227" opacity="0.9"/>
+    <circle cx="70" cy="70" r="5" fill="#C9A227"/>
+    <path d="M170 18 L182 30 L170 42 L158 30 Z" fill="#C9A227" opacity="0.75"/>
+    <path d="M18 170 L30 182 L42 170 L30 158 Z" fill="#C9A227" opacity="0.75"/>
+  </svg>
+  <% } %>
+
+  <div class="content">
+    <p class="eyebrow">Invitation au Mariage</p>
+
+    <svg class="rule" viewBox="0 0 520 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 15 H210" stroke="#C9A227" stroke-width="1.6"/>
+      <path d="M310 15 H520" stroke="#C9A227" stroke-width="1.6"/>
+      <path d="M260 2 L274 15 L260 28 L246 15 Z" fill="#C9A227"/>
+      <path d="M232 15 L222 8 M232 15 L222 22" stroke="#C9A227" stroke-width="1.6"/>
+      <path d="M288 15 L298 8 M288 15 L298 22" stroke="#C9A227" stroke-width="1.6"/>
+    </svg>
+
+    <p class="verse">
+      « Et si quelqu'un est plus fort qu'un seul, deux peuvent lui résister, et la corde à trois fils ne se rompt pas facilement. »
+      <span class="verse-ref">Ecclésiaste 4:12</span>
+    </p>
+
+    <p class="names">Franckesky<span class="amp">&amp;</span>Charlène</p>
+
+    <p class="date"><%= dateMariage %></p>
+
+    <table class="program">
+      <tr>
+        <td class="hour">10H00</td>
+        <td class="event">Cérémonie civile
+          <span class="venue">Mairie de Yopougon</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="hour">13H30</td>
+        <td class="event">Cérémonie religieuse
+          <span class="venue">Église CMA de Yopougon Port Bouët 2</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="hour">16H00</td>
+        <td class="event">Réception
+          <span class="venue">Espace Royal KS de Yopougon Millionnaire</span>
+        </td>
+      </tr>
+    </table>
+
+    <p class="dress">Chic &amp; Élégant &nbsp;|&nbsp; Vert Émeraude, Or &amp; Blanc</p>
+
+    <div class="guest">
+      <p class="guest-label">Cette invitation est réservée à</p>
+      <p class="guest-name"><%= prenom %> <%= nom %></p>
+    </div>
+
+    <div class="qr-zone">
+      <div class="qr-box"><%- qrSvg %></div>
+      <p class="qr-caption">Présentez ce code à l'entrée</p>
+    </div>
+
+    <p class="contact">Contact &nbsp;·&nbsp; 0709898475</p>
+  </div>
+</div>
+</body>
+</html>

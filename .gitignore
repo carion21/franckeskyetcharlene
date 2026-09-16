@@ -141,3 +141,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Project — local artifacts
+# Puppeteer/PDF scratch output, Chromium cache when downloaded into the project
+tmp/
+.puppeteer-cache/
+public/generated/
+*.pdf

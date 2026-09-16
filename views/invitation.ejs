@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Votre invitation — Franckesky &amp; Charlène</title>
+<meta name="theme-color" content="#046241">
+<%# Page personnelle : jamais indexée, jamais partagée aux moteurs. %>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/shared/fonts.css">
+<link rel="stylesheet" href="/shared/palette.css">
+<link rel="stylesheet" href="/shared/invitation.css">
+</head>
+
+<body class="inv">
+
+<main class="inv__wrap">
+
+  <header class="inv__head">
+    <p class="inv__mark t-script">F &amp; C</p>
+    <p class="inv__date t-label"><%= dateMariage %></p>
+  </header>
+
+  <section class="inv__hero">
+    <p class="inv__eyebrow t-label">Votre présence est confirmée</p>
+    <h1 class="inv__name"><%= rsvp.prenom %> <%= rsvp.nom %></h1>
+    <p class="inv__lede t-verse">
+      Merci d'avoir répondu. Voici votre carte d'invitation personnelle —
+      gardez-la, c'est elle qui vous ouvrira la porte le jour J.
+    </p>
+  </section>
+
+  <!-- Aperçu de la carte -->
+  <section class="card-preview" aria-labelledby="preview-title">
+    <h2 class="u-visually-hidden" id="preview-title">Aperçu de votre carte</h2>
+
+    <div class="card-preview__frame">
+      <%# Une image, pas le PDF embarqué : Safari et Chrome mobile refusent
+          souvent d'afficher un PDF en ligne et lancent un téléchargement à la
+          place — désagréable au chargement de la page. Le repli QR s'affiche
+          seul si l'aperçu manque (onerror, sans JS inline via invitation.js). %>
+      <img class="card-preview__doc" id="card-preview"
+           src="/api/card/<%= rsvp.id %>/apercu"
+           alt="Aperçu de votre carte d'invitation"
+           width="727" height="1032" loading="eager" decoding="async">
+
+      <div class="card-preview__fallback" id="card-preview-fallback" hidden>
+        <img class="card-preview__qr" src="<%= qrDataUri %>" width="160" height="160"
+             alt="QR code de votre invitation">
+        <p class="card-preview__hint t-verse">
+          Votre carte est prête au téléchargement juste en dessous.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Actions -->
+  <section class="actions" aria-label="Votre carte et votre agenda">
+    <a class="btn btn--gold t-label" href="/api/card/<%= rsvp.id %>">
+      Télécharger ma carte
+    </a>
+
+    <%# Toujours visible, indépendamment de l'auto-déclenchement : les
+        navigateurs mobiles bloquent souvent le téléchargement automatique
+        (PRD §3.1, §9). %>
+    <a class="btn btn--outline t-label" id="ics-button" href="/api/ics/<%= rsvp.id %>">
+      Ajouter à mon agenda
+    </a>
+
+    <p class="actions__note t-verse">
+      Trois rappels sont inclus : une semaine, trois jours et la veille.
+    </p>
+  </section>
+
+  <!-- Programme -->
+  <section class="program" aria-labelledby="program-title">
+    <h2 class="program__title t-label" id="program-title">Programme du jour</h2>
+    <ol class="program__list">
+      <li class="step">
+        <p class="step__hour t-label">10h00 — Cérémonie civile</p>
+        <p class="step__place">Mairie de Yopougon</p>
+      </li>
+      <li class="step">
+        <p class="step__hour t-label">13h30 — Cérémonie religieuse</p>
+        <p class="step__place">Église CMA de Port-Bouët 2, Yopougon</p>
+      </li>
+      <li class="step">
+        <p class="step__hour t-label">16h00 — Réception</p>
+        <p class="step__place">Espace Royal KS, Yopougon Millionnaire</p>
+      </li>
+    </ol>
+
+    <p class="program__dress t-label">Chic &amp; Élégant · Vert Émeraude, Blanc &amp; Or</p>
+  </section>
+
+  <!-- Contact -->
+  <section class="contact">
+    <a class="contact__link" href="https://wa.me/2250709898475" target="_blank" rel="noopener noreferrer">
+      <svg class="contact__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2 22l5.06-1.33A9.93 9.93 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.2-1.76 1.28-.45.07-1 .1-1.62-.1-.37-.12-.85-.28-1.46-.55-2.57-1.11-4.25-3.7-4.38-3.87-.13-.17-1.04-1.38-1.04-2.63 0-1.25.65-1.86.88-2.12.22-.26.5-.32.66-.32.16 0 .33 0 .47.01.15.01.36-.06.56.43.22.53.74 1.83.8 1.97.07.14.11.3.02.48-.5 1-.98 1.36-.7 1.83.51.86 1.02 1.5 1.83 2.1.85.63 1.46.86 1.68.95.22.09.35.07.48-.05.14-.13.6-.62.76-.83.16-.22.32-.18.53-.11.22.08 1.38.68 1.62.8.24.13.4.19.46.3.06.11.06.63-.16 1.25z"/>
+      </svg>
+      <span class="t-label">0709 89 84 75</span>
+    </a>
+  </section>
+
+  <footer class="inv__foot">
+    <p class="inv__mark inv__mark--small t-script">F &amp; C</p>
+    <p class="inv__date t-label">10.10.2026</p>
+  </footer>
+
+</main>
+
+<%# L'auto-déclenchement du .ics n'a lieu qu'à la première visite. Le drapeau
+    est déjà passé à true côté serveur, donc un rechargement ne le rejoue pas. %>
+<script src="/shared/invitation.js" data-auto-ics="<%= autoIcs ? 'true' : 'false' %>"
+        data-ics-url="/api/ics/<%= rsvp.id %>" defer></script>
+</body>
+</html>

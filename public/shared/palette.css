@@ -1,0 +1,86 @@
+/* Design tokens shared by /v1, /v2 and /v3 — PRD §2.1.
+   The three scroll structures differ, but the palette is identical across all
+   three wireframes, so only the tokens are factored here — never layout. */
+
+:root {
+  /* Strict palette */
+  --emerald: #046241;
+  --gold: #c9a227;
+  --cream: #fdfbf6;
+
+  /* Derived shades, used for depth only — never as a substitute for the three above */
+  --emerald-deep: #023823;
+  --emerald-darkest: #012014;
+  --emerald-light: #06764f;
+  --gold-light: #e4c766;
+  --ink: #1f2e26;
+  --cream-dim: #b9cfc3;
+
+  /* Teintes de contraste — l'or pur reste réservé à l'ornement (§2.1 : « accent
+     décoratif »), qui n'a besoin que de 3:1. Pour du *texte* de petite taille,
+     l'or pur échoue au niveau AA et ces deux teintes prennent le relais :
+       --gold  #C9A227 sur crème   → 2.34:1  ✗
+       --gold  #C9A227 sur émeraude→ 3.07:1  ✗
+       --gold-on-cream   #8A6F14  → 4.65:1  ✓ AA
+       --gold-on-emerald #E4C766  → 4.48:1  ✓ AA (arrondi)
+       --on-gold         #2B2308  → 6.45:1  ✓ AA sur un fond or */
+  --gold-on-cream: #8a6f14;
+  --gold-on-emerald: #e4c766;
+  --on-gold: #2b2308;
+
+  /* Rhythm */
+  --section-y: clamp(72px, 12vw, 120px);
+  --gutter: clamp(20px, 5vw, 32px);
+  --measure: 62ch;
+
+  /* Motion — durations honoured by CSS; GSAP reads its own values */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-slow: 1s;
+  --dur-mid: 0.55s;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible focus for keyboard users — the gold reads on both backgrounds. */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.u-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Anything the scroll choreography hides must come back if motion is refused,
+   otherwise the page reads as blank. Each version repeats this guarantee for
+   its own animated selectors. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

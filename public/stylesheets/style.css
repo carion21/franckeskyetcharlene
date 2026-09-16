@@ -1,0 +1,252 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Backoffice admin (PRD §4.6) — styles réservés à /admin/*.
+   Même palette et même typographie que le reste du site (shared/), mais un
+   registre nettement plus sobre : c'est un outil de travail, pas une page
+   de mariage.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.admin {
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.admin--centered {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  background: linear-gradient(160deg, var(--emerald), var(--emerald-deep));
+}
+
+.admin__wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 34px) clamp(16px, 4vw, 28px) 64px;
+}
+
+/* ── Connexion ───────────────────────────────────────────────────────── */
+.login {
+  width: min(100%, 380px);
+  padding: clamp(28px, 6vw, 40px);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 8px;
+  background: rgba(253, 251, 246, 0.04);
+}
+
+.login__head { text-align: center; margin-bottom: 28px; }
+.login__mark { margin: 0; font-size: 40px; color: var(--cream); }
+
+.login__title {
+  margin: 6px 0 0;
+  color: var(--gold-on-emerald);
+  font-size: 0.72rem;
+}
+
+.login__form { display: flex; flex-direction: column; gap: 18px; }
+
+.login .field__label { color: var(--gold-on-emerald); }
+
+.login .field__input {
+  background: rgba(253, 251, 246, 0.08);
+  border-color: rgba(253, 251, 246, 0.35);
+  color: var(--cream);
+}
+
+.login .field__input:focus { border-color: var(--gold); outline: none; }
+
+/* ── Champs ──────────────────────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field__label {
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--gold-on-cream);
+}
+
+.field__input {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1.3px solid rgba(31, 46, 38, 0.25);
+  border-radius: 6px;
+  background: var(--cream);
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+.field__input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* ── Boutons ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-block;
+  min-height: 44px; /* cible tactile */
+  padding: 12px 22px;
+  border: none;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn--gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--on-gold);
+  font-weight: 700;
+}
+
+.btn--ghost {
+  border: 1.3px solid currentColor;
+  background: transparent;
+  color: inherit;
+}
+
+.btn--small { min-height: 34px; padding: 8px 14px; font-size: 0.64rem; }
+
+/* ── Alerte ──────────────────────────────────────────────────────────── */
+.alert {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: rgba(201, 162, 39, 0.12);
+  color: var(--gold-light);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* ── Barre du haut ───────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px clamp(16px, 4vw, 28px);
+  background: var(--emerald);
+  color: var(--cream);
+}
+
+.topbar__left, .topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar__mark { font-family: var(--font-script); font-size: 26px; }
+.topbar__title { color: var(--gold-on-emerald); font-size: 0.7rem; }
+.topbar__user { color: var(--cream-dim); font-size: 0.64rem; }
+
+/* ── Statistiques ────────────────────────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat {
+  padding: 18px 20px;
+  border: 1px solid rgba(4, 98, 65, 0.18);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.stat--warn { border-color: var(--gold); background: rgba(201, 162, 39, 0.08); }
+
+.stat__value {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--emerald);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__label {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.62rem;
+  color: var(--gold-on-cream);
+}
+
+/* ── Tableau ─────────────────────────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(4, 98, 65, 0.18);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table th, .table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(4, 98, 65, 0.1);
+  white-space: nowrap;
+}
+
+.table th {
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-on-cream);
+  background: rgba(4, 98, 65, 0.04);
+}
+
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: rgba(201, 162, 39, 0.05); }
+
+.table a { color: var(--emerald); }
+
+.table__actions { display: flex; gap: 8px; }
+
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--ink);
+  opacity: 0.7;
+}
+
+/* Sous 720px le tableau devient une pile de fiches : un tableau à 7 colonnes
+   en scroll horizontal est pénible à lire sur téléphone. */
+@media (max-width: 720px) {
+  .table thead { display: none; }
+  .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+
+  .table tr {
+    padding: 12px 4px;
+    border-bottom: 1px solid rgba(4, 98, 65, 0.14);
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 14px;
+    border: 0;
+    white-space: normal;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-on-cream);
+  }
+
+  .table__actions { justify-content: flex-end; }
+  .table__actions::before { content: none; }
+}

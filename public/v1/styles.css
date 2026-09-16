@@ -1,0 +1,632 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   /v1 — « Pellicule »
+   Défilement continu, sans rupture franche : les sections s'enchaînent comme
+   les photogrammes d'une bande-film, perforations comprises. Mobile-first.
+   Palette et typographie : /shared/palette.css, /shared/fonts.css.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Ouverture ───────────────────────────────────────────────────────── */
+/* L'écran d'ouverture se retire tout seul en CSS : si le JS ou le CDN GSAP
+   échoue, il ne peut pas rester bloqué par-dessus la page. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--emerald), var(--emerald-deep));
+  animation: overlay-dismiss 0.9s var(--ease-out) 2.4s forwards;
+}
+
+@keyframes overlay-dismiss {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+.overlay[hidden] { display: none; }
+
+.overlay__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 230px;
+  height: 170px;
+}
+
+.overlay__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.overlay__frame line {
+  stroke: var(--gold);
+  stroke-width: 1.4;
+}
+
+.overlay__initials {
+  font-size: 54px;
+  color: var(--cream);
+}
+
+/* ── Bande-film ──────────────────────────────────────────────────────── */
+.film { background: var(--emerald); }
+
+.film__strip {
+  position: relative;
+  z-index: 1;
+}
+
+/* Perforations latérales — motif signature de cette version.
+   Purement décoratives, masquées sous 900px pour rendre l'espace au contenu. */
+.film__rail {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 26px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 18px,
+    rgba(201, 162, 39, 0.28) 18px 34px
+  );
+  opacity: 0.55;
+}
+
+.film__rail--left { left: 0; }
+.film__rail--right { right: 0; }
+
+@media (max-width: 900px) {
+  .film__rail { display: none; }
+}
+
+.frame {
+  position: relative;
+  padding: var(--section-y) var(--gutter);
+}
+
+.frame--cream { background: var(--cream); color: var(--ink); }
+.frame--emerald { background: var(--emerald); color: var(--cream); }
+
+.frame__body {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.hero {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--emerald);
+  text-align: center;
+}
+
+/* La photo du couple se dépose ici. Tant que le fichier est absent, le dégradé
+   sous-jacent tient lieu de fond — aucune image cassée n'est affichée. */
+.hero__photo {
+  position: absolute;
+  inset: 0;
+  background-color: var(--emerald-light);
+  background-image:
+    radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
+    url('/shared/img/couple.jpg');
+  background-size: cover;
+  /* Photo portrait, visages dans le tiers haut : on ancre le cadrage en haut
+     pour ne pas les rogner sur un viewport large. */
+  background-position: center 22%;
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4, 98, 65, 0.5), rgba(2, 56, 35, 0.9));
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  padding: 90px 0;
+}
+
+.hero__names {
+  margin: 0;
+  font-size: clamp(42px, 9vw, 78px);
+  color: var(--cream);
+}
+
+/* Chaque lettre est enveloppée par animations.js ; sans JS le nom reste lisible. */
+.hero__names .char {
+  display: inline-block;
+  white-space: pre;
+}
+
+.hero__rule {
+  width: 120px;
+  height: 2px;
+  margin: 16px auto 0;
+  background: var(--gold);
+  transform-origin: center;
+}
+
+.hero__place {
+  margin: 16px 0 0;
+  color: var(--gold-on-emerald);
+  letter-spacing: 0.22em;
+}
+
+.countdown {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 44px;
+}
+
+.countdown__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 56px;
+}
+
+.countdown__num {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(28px, 7vw, 32px);
+  font-variant-numeric: tabular-nums;
+  color: var(--cream);
+}
+
+.countdown__lbl { color: var(--gold-on-emerald); font-size: 0.62rem; }
+
+.countdown__passed {
+  margin-top: 44px;
+  color: var(--gold-on-emerald);
+  font-style: italic;
+}
+
+.hero__particles { position: absolute; inset: 0; }
+
+.particle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  opacity: 0.32;
+  fill: var(--gold);
+}
+
+.particle--1 { top: 14%; left: 9%; }
+.particle--2 { top: 70%; right: 10%; width: 18px; height: 18px; }
+.particle--3 { top: 42%; left: 78%; width: 14px; height: 14px; }
+
+/* Particules réduites sur petit écran (PRD §4.1) : une seule survit. */
+@media (max-width: 700px) {
+  .particle--2,
+  .particle--3 { display: none; }
+}
+
+.hero__scroll {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: block;
+  padding: 10px;
+}
+
+.hero__scroll-line {
+  display: block;
+  width: 2px;
+  height: 40px;
+  background: var(--gold);
+}
+
+/* ── Bienvenue ───────────────────────────────────────────────────────── */
+.welcome { text-align: center; }
+
+.ornament {
+  margin: 0 0 18px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 26px;
+  color: var(--gold-on-cream);
+}
+
+.welcome__text {
+  max-width: var(--measure);
+  margin: 0 auto;
+  font-size: 1.12rem;
+  line-height: 1.85;
+}
+
+.welcome__rule {
+  width: 70px;
+  height: 1.5px;
+  margin: 26px auto 0;
+  background: var(--gold);
+}
+
+/* ── Verset ──────────────────────────────────────────────────────────── */
+.verse__card {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: clamp(40px, 8vw, 56px) clamp(24px, 6vw, 36px);
+  text-align: center;
+}
+
+.verse__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.verse__frame rect,
+.climax__frame rect {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.verse__text {
+  position: relative;
+  margin: 0;
+  font-size: clamp(1.05rem, 3.6vw, 1.35rem);
+  line-height: 1.75;
+  color: var(--cream);
+}
+
+.verse__ref {
+  position: relative;
+  display: block;
+  margin-top: 20px;
+  color: var(--gold-on-emerald);
+}
+
+/* ── Programme ───────────────────────────────────────────────────────── */
+.program__title {
+  margin: 0 0 48px;
+  color: var(--gold-on-emerald);
+  text-align: center;
+}
+
+.program__track { position: relative; }
+
+/* Fil doré : tracé au scroll par GSAP (scaleY 0 → 1). */
+.program__thread {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 22px;
+  width: 2px;
+  background: linear-gradient(var(--gold), var(--gold-light), var(--gold));
+  transform: scaleY(0);
+  transform-origin: top center;
+}
+
+.program__list {
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.step__dot {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1.3px solid var(--gold);
+  border-radius: 50%;
+  background: var(--emerald);
+}
+
+.step__dot svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.step__hour { margin: 0; color: var(--gold-on-emerald); letter-spacing: 0.12em; }
+
+.step__place {
+  margin: 4px 0 0;
+  font-size: 1.08rem;
+  color: var(--cream);
+}
+
+/* ── Code vestimentaire ──────────────────────────────────────────────── */
+.dress { text-align: center; }
+
+.dress__label { margin: 0; color: var(--gold-on-cream); }
+
+.dress__title {
+  margin: 10px 0 0;
+  font-size: clamp(30px, 8vw, 38px);
+  color: var(--emerald);
+}
+
+.dress__sub { margin: 6px 0 0; font-size: 1rem; }
+
+.dress__swatches {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.swatch {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.swatch--emerald { background: var(--emerald); border: 2px solid var(--cream); transform: rotate(-8deg); }
+.swatch--cream { background: var(--cream); border: 2px solid var(--emerald); transform: rotate(5deg); }
+.swatch--gold { background: var(--gold); border: 2px solid var(--cream); transform: rotate(-3deg); }
+
+/* ── Climax ──────────────────────────────────────────────────────────── */
+.climax {
+  background: linear-gradient(160deg, var(--emerald-deep), var(--emerald-darkest));
+  text-align: center;
+}
+
+.climax__card {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: clamp(48px, 9vw, 64px) clamp(24px, 6vw, 32px);
+}
+
+.climax__frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.climax__frame rect { stroke-width: 0.7; }
+
+.climax__spark {
+  position: absolute;
+  top: 14%;
+  right: 18%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  opacity: 0;
+  box-shadow: 0 0 12px 3px rgba(228, 199, 102, 0.55);
+}
+
+.climax__kicker {
+  position: relative;
+  margin: 0;
+  font-size: clamp(30px, 8vw, 38px);
+  color: var(--gold-light);
+}
+
+.climax__title {
+  position: relative;
+  margin: 12px 0 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(22px, 6vw, 30px);
+  color: var(--cream);
+}
+
+/* ── RSVP ────────────────────────────────────────────────────────────── */
+.rsvp__inner {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field--group { gap: 10px; }
+
+.field__label {
+  color: var(--gold-on-emerald);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  padding: 0;
+}
+
+.field__input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.3px solid rgba(253, 251, 246, 0.35);
+  border-radius: 6px;
+  background: rgba(253, 251, 246, 0.08);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 1.02rem;
+  transition: border-color var(--dur-mid) var(--ease-out);
+}
+
+.field__input:focus { border-color: var(--gold); outline: none; }
+.field__input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.field__input[aria-invalid='true'] { border-color: var(--gold-light); }
+
+.field__error {
+  margin: 0;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--gold-light);
+}
+
+.pills { display: flex; gap: 12px; }
+.pills--wrap { flex-wrap: wrap; }
+
+/* Le radio natif reste le contrôle réel — seul son rendu est remplacé,
+   pour garder le clavier et les lecteurs d'écran fonctionnels. */
+.pill { cursor: pointer; }
+
+.pill input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.pill span {
+  display: inline-block;
+  padding: 10px 20px;
+  border: 1.5px solid rgba(253, 251, 246, 0.35);
+  border-radius: 30px;
+  color: var(--cream);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: background var(--dur-mid) var(--ease-out),
+              color var(--dur-mid) var(--ease-out),
+              border-color var(--dur-mid) var(--ease-out);
+}
+
+.pill input:checked + span {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.pill input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+.submit {
+  margin-top: 8px;
+  min-height: 56px;
+  padding: 18px 32px;
+  border: none;
+  border-radius: 60px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--on-gold);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.submit[disabled] { opacity: 0.72; cursor: progress; }
+
+.form__status {
+  margin: 0;
+  min-height: 1.2em;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--gold-light);
+  text-align: center;
+}
+
+.done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.done[hidden] { display: none; }
+
+.done__check {
+  width: 52px;
+  height: 52px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.done__text {
+  max-width: 420px;
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--cream);
+}
+
+.done__link { color: var(--gold-on-emerald); }
+
+/* ── Contact ─────────────────────────────────────────────────────────── */
+.contact { text-align: center; }
+
+.contact__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  border: 1.3px solid var(--emerald);
+  border-radius: 40px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.contact__icon { width: 24px; height: 24px; fill: var(--emerald); }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.footer {
+  background: linear-gradient(160deg, var(--emerald), var(--emerald-deep));
+  text-align: center;
+}
+
+.footer__mark {
+  margin: 0;
+  font-size: 44px;
+  color: var(--cream);
+}
+
+.footer__date {
+  margin: 14px 0 0;
+  color: var(--gold-on-emerald);
+  letter-spacing: 0.3em;
+}
+
+/* ── Accessibilité : mouvement réduit ────────────────────────────────── */
+/* Les éléments que la chorégraphie masque doivent redevenir visibles,
+   sinon la page paraît vide. */
+@media (prefers-reduced-motion: reduce) {
+  .overlay { display: none; }
+
+  [data-reveal],
+  .hero__names .char {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .program__thread { transform: scaleY(1); }
+  .hero__photo { transform: none !important; }
+}

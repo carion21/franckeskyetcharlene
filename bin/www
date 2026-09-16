@@ -1,0 +1,128 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('franckeskyetcharlene:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Warm Chromium at boot.
+ *
+ * The first PDF render pays roughly three seconds of browser start-up. Doing it
+ * here means the cost lands on an idle server rather than on the first guest to
+ * confirm, which keeps the RSVP round trip inside the 1–3s budget (PRD §4.2).
+ */
+
+var pdfService = require('../services/pdf.service');
+var prisma = require('../config/db');
+
+pdfService.warmUp().catch(function (err) {
+  // Non-fatal: rendering will simply launch on first use instead.
+  console.warn('[startup] Chromium warm-up failed: %s', err.message);
+});
+
+/**
+ * Shut down cleanly so Chromium never outlives the server as an orphan.
+ */
+
+['SIGINT', 'SIGTERM'].forEach(function (signal) {
+  process.on(signal, function () {
+    server.close(function () {
+      Promise.all([
+        pdfService.closeBrowser(),
+        prisma.$disconnect()
+      ]).then(function () {
+        process.exit(0);
+      }).catch(function () {
+        process.exit(1);
+      });
+    });
+
+    // Don't hang forever on a stuck connection.
+    setTimeout(function () { process.exit(1); }, 8000).unref();
+  });
+});
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
