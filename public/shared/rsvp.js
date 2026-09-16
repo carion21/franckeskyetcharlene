@@ -15,6 +15,25 @@ window.WeddingRSVP = (function () {
 
   var RSVP_ENDPOINT = '/api/rsvp';
 
+  /**
+   * Durée minimale d'affichage de l'état « Envoi… ».
+   *
+   * La création du RSVP répond en ~300 ms : la génération de la carte est
+   * volontairement lancée sans être attendue (voir routes/rsvp.js). Sans ce
+   * plancher, le spinner n'existerait qu'un éclair et l'invité verrait le
+   * bouton passer d'un coup au résultat — il doute alors que quoi que ce soit
+   * ait été envoyé. 700 ms suffisent à voir le tour complet du spinner sans
+   * donner l'impression d'attendre.
+   */
+  var MIN_LOADING_MS = 700;
+
+  /** Laisse s'écouler ce qu'il reste du plancher d'attente depuis `startedAt`. */
+  function holdLoading(startedAt) {
+    var remaining = MIN_LOADING_MS - (Date.now() - startedAt);
+    if (remaining <= 0) return Promise.resolve();
+    return new Promise(function (resolve) { window.setTimeout(resolve, remaining); });
+  }
+
   /* ── Numéro de téléphone ───────────────────────────────────────────── */
 
   // Numéro mobile ivoirien : 10 chiffres sur les préfixes 01, 05 et 07,
@@ -206,10 +225,44 @@ window.WeddingRSVP = (function () {
       return ok;
     }
 
+    /* ── États du bouton ─────────────────────────────────────────────────
+       Le style vit dans shared/form-state.css ; ici on ne pose que les
+       classes et le libellé. */
+
+    function setLoading(loading) {
+      button.disabled = loading;
+      button.classList.toggle('is-loading', loading);
+      // Les lecteurs d'écran annoncent le changement d'état du bouton.
+      button.setAttribute('aria-busy', loading ? 'true' : 'false');
+      buttonLabel.textContent = loading ? 'Envoi…' : defaultLabel;
+    }
+
+    /**
+     * Verrouille le formulaire une fois la présence confirmée.
+     *
+     * Le formulaire reste visible — l'invité peut relire ce qu'il a envoyé —
+     * mais devient inerte. Le masquer ferait remonter d'un coup tout ce qui
+     * suit, juste au moment où le message de confirmation apparaît.
+     */
+    function lockForm() {
+      button.classList.remove('is-loading');
+      button.classList.add('is-confirmed');
+      button.setAttribute('aria-busy', 'false');
+      buttonLabel.textContent = 'Présence confirmée';
+      form.classList.add('is-locked');
+
+      // `disabled` est le vrai verrou : le grisé CSS n'empêcherait ni la
+      // frappe au clavier ni une seconde soumission.
+      Array.prototype.forEach.call(form.elements, function (element) {
+        element.disabled = true;
+      });
+    }
+
     function finish(invitationUrl, customMessage) {
+      lockForm();
+
       if (!done) return;
 
-      form.hidden = true;
       done.hidden = false;
 
       if (customMessage) {
@@ -225,8 +278,19 @@ window.WeddingRSVP = (function () {
 
       if (onDone) onDone(done);
 
+      // `preventScroll` : le focus seul ferait un saut brutal. On amène le
+      // bloc à l'écran juste après, en défilement doux — sauf si l'invité a
+      // demandé moins de mouvement.
       done.setAttribute('tabindex', '-1');
-      done.focus();
+      try { done.focus({ preventScroll: true }); } catch (err) { done.focus(); }
+
+      var reduced = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      done.scrollIntoView({
+        behavior: reduced ? 'auto' : 'smooth',
+        block: 'center'
+      });
     }
 
     form.addEventListener('submit', function (event) {
@@ -247,8 +311,8 @@ window.WeddingRSVP = (function () {
         return;
       }
 
-      button.disabled = true;
-      buttonLabel.textContent = 'Envoi…';
+      var startedAt = Date.now();
+      setLoading(true);
       status.textContent = '';
 
       window.fetch(RSVP_ENDPOINT, {
@@ -271,6 +335,11 @@ window.WeddingRSVP = (function () {
             .then(function (payload) {
               return { ok: response.ok, status: response.status, payload: payload };
             });
+        })
+        // Plancher d'attente appliqué avant toute bascule d'état, succès
+        // comme erreur : c'est ce qui rend le chargement perceptible.
+        .then(function (result) {
+          return holdLoading(startedAt).then(function () { return result; });
         })
         .then(function (result) {
           if (!result.ok) {
@@ -295,9 +364,14 @@ window.WeddingRSVP = (function () {
           );
         })
         .catch(function (error) {
-          button.disabled = false;
-          buttonLabel.textContent = defaultLabel;
-          status.textContent = error.message || 'Une erreur est survenue. Merci de réessayer.';
+          // `holdLoading` est rejoué ici pour le cas où `fetch` lui-même a
+          // échoué avant le premier passage — le plancher est déjà écoulé
+          // autrement, et l'appel se résout alors immédiatement.
+          return holdLoading(startedAt).then(function () {
+            setLoading(false);
+            status.textContent = error.message ||
+              'Une erreur est survenue. Merci de réessayer.';
+          });
         });
     });
   }
