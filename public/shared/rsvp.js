@@ -17,9 +17,22 @@ window.WeddingRSVP = (function () {
 
   /* ── Numéro de téléphone ───────────────────────────────────────────── */
 
-  // Numéro ivoirien : 10 chiffres, groupés par deux à la lecture.
-  var PHONE_GROUPS = 5;
+  // Numéro mobile ivoirien : 10 chiffres sur les préfixes 01, 05 et 07,
+  // groupés par deux à la lecture. Mêmes règles que le serveur, qui reste
+  // l'autorité (PRD §6) — ici c'est uniquement pour le retour immédiat.
   var PHONE_DIGITS = 10;
+  var PHONE_PREFIXES = ['01', '05', '07'];
+
+  function phoneError(digits) {
+    if (!digits) return 'Champ requis';
+    // Dès que les deux premiers chiffres sont posés, on sait si le préfixe est
+    // valide : inutile d'attendre les dix pour le signaler.
+    if (digits.length >= 2 && PHONE_PREFIXES.indexOf(digits.slice(0, 2)) === -1) {
+      return 'Le numéro doit commencer par 01, 05 ou 07';
+    }
+    if (digits.length !== PHONE_DIGITS) return 'Le numéro doit contenir 10 chiffres';
+    return null;
+  }
 
   function phoneDigits(value) {
     return String(value || '').replace(/[^0-9]/g, '').slice(0, PHONE_DIGITS);
@@ -125,15 +138,48 @@ window.WeddingRSVP = (function () {
     var defaultLabel = buttonLabel ? buttonLabel.textContent : 'Confirmer ma présence';
 
     attachPhoneMask(form.elements.telephone);
+    watchPhone();
 
-    function showError(name, show) {
+    function showError(name, show, message) {
       var node = form.querySelector('[data-error-for="' + name + '"]');
-      if (node) node.hidden = !show;
+      if (node) {
+        if (message) node.textContent = message;
+        node.hidden = !show;
+      }
 
       var input = form.elements[name];
       if (input && input.setAttribute) {
         input.setAttribute('aria-invalid', show ? 'true' : 'false');
       }
+    }
+
+    /**
+     * Contrôle du numéro pendant la frappe.
+     *
+     * Le préfixe est signalé dès le deuxième chiffre — attendre la soumission
+     * pour dire « mauvais préfixe » oblige à ressaisir dix chiffres. En
+     * revanche la longueur n'est reprochée qu'une fois le champ quitté : la
+     * signaler pendant la frappe afficherait une erreur à chaque caractère.
+     */
+    function watchPhone() {
+      var input = form.elements.telephone;
+      if (!input) return;
+
+      input.addEventListener('input', function () {
+        var digits = phoneDigits(input.value);
+        var prefixWrong = digits.length >= 2 &&
+          PHONE_PREFIXES.indexOf(digits.slice(0, 2)) === -1;
+
+        if (prefixWrong) showError('telephone', true, 'Le numéro doit commencer par 01, 05 ou 07');
+        else showError('telephone', false);
+      });
+
+      input.addEventListener('blur', function () {
+        var digits = phoneDigits(input.value);
+        if (!digits) return; // champ vide : on ne reproche rien tant qu'il n'a pas soumis
+        var message = phoneError(digits);
+        showError('telephone', Boolean(message), message || undefined);
+      });
     }
 
     // Validation de confort : évite un aller-retour réseau. La validation qui
@@ -147,11 +193,9 @@ window.WeddingRSVP = (function () {
         if (invalid) ok = false;
       });
 
-      // 10 chiffres, commençant par 0 — mêmes règles que le serveur, qui reste
-      // l'autorité (PRD §6).
-      var phoneInvalid = !/^0\d{9}$/.test(phoneDigits(raw.telephone));
-      showError('telephone', phoneInvalid);
-      if (phoneInvalid) ok = false;
+      var phoneMessage = phoneError(phoneDigits(raw.telephone));
+      showError('telephone', Boolean(phoneMessage), phoneMessage || undefined);
+      if (phoneMessage) ok = false;
 
       // Email facultatif : vérifié seulement s'il est renseigné.
       var email = (raw.email || '').trim();

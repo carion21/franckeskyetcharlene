@@ -482,9 +482,18 @@ lieu d'en créer une seconde.
 ### Masque de saisie du numéro
 
 Format ivoirien : 10 chiffres, groupés par deux — `07 12 34 56 78`, repris en `placeholder`.
-Validation : 10 chiffres commençant par `0`. Le préfixe opérateur (01/05/07) n'est
-volontairement **pas** codé en dur — rejeter le vrai numéro d'un invité serait pire que
-d'accepter un numéro atypique, et la liste des préfixes évolue.
+Validation : 10 chiffres sur les préfixes mobiles **01, 05 ou 07**. Les préfixes fixes
+(21/25/27) sont exclus volontairement : ce numéro sert à joindre l'invité à propos du jour J,
+ce qu'un mobile permet.
+
+**Contrôle en direct.** Le préfixe est signalé **dès le deuxième chiffre** — attendre la
+soumission pour annoncer « mauvais préfixe » obligerait à ressaisir dix chiffres. La longueur,
+elle, n'est reprochée qu'à la sortie du champ : la vérifier pendant la frappe afficherait une
+erreur à chaque caractère. Les deux messages sont distincts (« doit commencer par 01, 05
+ou 07 » / « doit contenir 10 chiffres »).
+
+Le libellé du champ est **« Téléphone »**, aligné sur les autres libellés qui sont des noms
+simples (Prénom, Nom, Email).
 
 La mise en forme se fait pendant la frappe, avec **repositionnement manuel du curseur** :
 réécrire `value` le renvoie sinon systématiquement en fin de champ, ce qui rend toute

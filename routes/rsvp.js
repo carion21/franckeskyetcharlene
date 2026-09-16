@@ -27,10 +27,13 @@ var MAX = { nom: 80, prenom: 80, email: 160, telephone: 30 };
 // one. Confirms there is a local part, an @, and a dotted domain.
 var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-// Ivorian numbers are 10 digits and start with 0 (01/05/07 mobile, 21/25/27
-// fixed). Checking the leading zero and the length catches a mistyped number
-// without hardcoding an operator list that would reject a future prefix.
-var PHONE_RE = /^0\d{9}$/;
+// Ivorian mobile numbers: 10 digits on the 01, 05 and 07 prefixes.
+//
+// Landline prefixes (21/25/27) are deliberately excluded: the number is how
+// the couple reaches a guest about the day itself, and a mobile is what makes
+// that possible.
+var PHONE_PREFIXES = ['01', '05', '07'];
+var PHONE_RE = /^(01|05|07)\d{8}$/;
 
 function asString(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -74,8 +77,13 @@ function validate(body) {
     else if (!EMAIL_RE.test(email)) errors.email = 'Email invalide';
   }
 
-  if (!telephone) errors.telephone = 'Champ requis';
-  else if (!PHONE_RE.test(telephone)) errors.telephone = 'Numéro à 10 chiffres, commençant par 0';
+  if (!telephone) {
+    errors.telephone = 'Champ requis';
+  } else if (telephone.length !== 10) {
+    errors.telephone = 'Le numéro doit contenir 10 chiffres';
+  } else if (!PHONE_RE.test(telephone)) {
+    errors.telephone = 'Le numéro doit commencer par 01, 05 ou 07';
+  }
 
   if (!relation) errors.relation = 'Merci de préciser';
   else if (RELATIONS.indexOf(relation) === -1) errors.relation = 'Valeur inattendue';
@@ -202,4 +210,6 @@ router.post('/api/rsvp', async function (req, res, next) {
 module.exports = router;
 module.exports.validate = validate;
 module.exports.RELATIONS = RELATIONS;
+module.exports.PHONE_PREFIXES = PHONE_PREFIXES;
+module.exports.normalisePhone = normalisePhone;
 module.exports.qrcodeService = qrcodeService;
