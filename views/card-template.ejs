@@ -236,10 +236,13 @@
     background: #FDFBF6;
     line-height: 0;
   }
-  /* SVG inline : reste vectoriel dans le PDF, donc net à l'impression. */
+  /* SVG inline : reste vectoriel dans le PDF, donc net à l'impression.
+     30mm pour 57 modules (zone de silence comprise) = 0,526mm par module,
+     confortablement au-dessus du seuil d'environ 0,4mm sous lequel un
+     téléphone peine à lire un code imprimé. */
   .qr-box svg {
     display: block;
-    width: 24mm; height: 24mm;
+    width: 30mm; height: 30mm;
     shape-rendering: crispEdges;
   }
   .qr-caption {
