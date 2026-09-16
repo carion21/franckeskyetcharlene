@@ -1,9 +1,13 @@
 /**
  * POST /api/rsvp — the critical path (PRD §9, §3.1 — FC-016).
  *
- * Order matters here: dedupe by email before creating anything, and treat card
+ * Order matters here: dedupe before creating anything, and treat card
  * generation as best-effort so a Puppeteer or MinIO failure never costs the
  * guest their confirmation.
+ *
+ * Deduping keys on the phone number, not the email. The email is optional, and
+ * an optional field cannot carry a "one RSVP per guest" guarantee — every guest
+ * has a phone, so that is what holds the rule (PRD §3.1).
  */
 
 var express = require('express');
@@ -23,8 +27,25 @@ var MAX = { nom: 80, prenom: 80, email: 160, telephone: 30 };
 // one. Confirms there is a local part, an @, and a dotted domain.
 var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+// Ivorian numbers are 10 digits and start with 0 (01/05/07 mobile, 21/25/27
+// fixed). Checking the leading zero and the length catches a mistyped number
+// without hardcoding an operator list that would reject a future prefix.
+var PHONE_RE = /^0\d{9}$/;
+
 function asString(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Reduces a phone number to its digits.
+ *
+ * The form presents the number spaced ("07 12 34 56 78") because that is how it
+ * is read aloud and written locally, but it is stored bare. Without this,
+ * "07 12 34 56 78" and "0712345678" would be two different guests and the
+ * uniqueness rule would quietly stop working.
+ */
+function normalisePhone(value) {
+  return asString(value).replace(/[^0-9]/g, '');
 }
 
 /**
@@ -37,7 +58,7 @@ function validate(body) {
   var prenom = asString(body.prenom);
   var nom = asString(body.nom);
   var email = asString(body.email);
-  var telephone = asString(body.telephone);
+  var telephone = normalisePhone(body.telephone);
   var relation = asString(body.relation);
 
   if (!prenom) errors.prenom = 'Champ requis';
@@ -46,12 +67,15 @@ function validate(body) {
   if (!nom) errors.nom = 'Champ requis';
   else if (nom.length > MAX.nom) errors.nom = 'Nom trop long';
 
-  if (!email) errors.email = 'Champ requis';
-  else if (email.length > MAX.email) errors.email = 'Email trop long';
-  else if (!EMAIL_RE.test(email)) errors.email = 'Email invalide';
+  // Optional — but still checked when filled in, so a typo is caught rather
+  // than silently stored.
+  if (email) {
+    if (email.length > MAX.email) errors.email = 'Email trop long';
+    else if (!EMAIL_RE.test(email)) errors.email = 'Email invalide';
+  }
 
   if (!telephone) errors.telephone = 'Champ requis';
-  else if (telephone.length > MAX.telephone) errors.telephone = 'Numéro trop long';
+  else if (!PHONE_RE.test(telephone)) errors.telephone = 'Numéro à 10 chiffres, commençant par 0';
 
   if (!relation) errors.relation = 'Merci de préciser';
   else if (RELATIONS.indexOf(relation) === -1) errors.relation = 'Valeur inattendue';
@@ -85,11 +109,20 @@ router.post('/api/rsvp', async function (req, res, next) {
       });
     }
 
-    var email = asString(body.email).toLowerCase();
+    var telephone = normalisePhone(body.telephone);
+    var email = asString(body.email).toLowerCase() || null;
 
     // 2. Already confirmed → hand back the existing card. Not an error: the
     //    guest simply arrives at the invitation they already have.
-    var existing = await prisma.rsvp.findUnique({ where: { email: email } });
+    //
+    //    The phone is the identity. The email is checked too when given, so a
+    //    guest who confirmed with an address and comes back from another phone
+    //    still lands on their own card instead of creating a second one.
+    var existing = await prisma.rsvp.findFirst({
+      where: email
+        ? { OR: [{ telephone: telephone }, { email: email }] }
+        : { telephone: telephone }
+    });
 
     if (existing) {
       return res.json({
@@ -109,16 +142,21 @@ router.post('/api/rsvp', async function (req, res, next) {
           prenom: asString(body.prenom),
           nom: asString(body.nom),
           email: email,
-          telephone: asString(body.telephone),
+          telephone: telephone,
           relation: asString(body.relation),
           accompagne: body.accompagne === true
         }
       });
     } catch (err) {
-      // Two simultaneous submissions of the same address: the unique index is
-      // the real guard, so treat the loser as an "already confirmed" too.
+      // Two simultaneous submissions from the same guest: the unique index is
+      // the real guard, so treat the loser as an "already confirmed" too. The
+      // collision may be on either column, hence the same lookup as above.
       if (err.code === 'P2002') {
-        var winner = await prisma.rsvp.findUnique({ where: { email: email } });
+        var winner = await prisma.rsvp.findFirst({
+          where: email
+            ? { OR: [{ telephone: telephone }, { email: email }] }
+            : { telephone: telephone }
+        });
         if (winner) {
           return res.json({
             success: true,

@@ -15,6 +15,60 @@ window.WeddingRSVP = (function () {
 
   var RSVP_ENDPOINT = '/api/rsvp';
 
+  /* ── Numéro de téléphone ───────────────────────────────────────────── */
+
+  // Numéro ivoirien : 10 chiffres, groupés par deux à la lecture.
+  var PHONE_GROUPS = 5;
+  var PHONE_DIGITS = 10;
+
+  function phoneDigits(value) {
+    return String(value || '').replace(/[^0-9]/g, '').slice(0, PHONE_DIGITS);
+  }
+
+  /** "0712345678" → "07 12 34 56 78" */
+  function formatPhone(value) {
+    return (phoneDigits(value).match(/.{1,2}/g) || []).join(' ');
+  }
+
+  /**
+   * Met en forme le numéro pendant la frappe.
+   *
+   * Le curseur est repositionné à la main : réécrire `value` le renvoie sinon
+   * en fin de champ, ce qui rend toute correction au milieu du numéro
+   * impossible. On compte les chiffres à gauche du curseur et on le replace
+   * après le même chiffre une fois les espaces réinsérés.
+   */
+  function attachPhoneMask(input) {
+    if (!input) return;
+
+    function apply() {
+      var before = input.value;
+      var caret = input.selectionStart;
+      var digitsBeforeCaret = phoneDigits(before.slice(0, caret)).length;
+
+      var formatted = formatPhone(before);
+      if (formatted === before) return;
+
+      input.value = formatted;
+
+      var pos = 0;
+      var seen = 0;
+      while (pos < formatted.length && seen < digitsBeforeCaret) {
+        if (/[0-9]/.test(formatted[pos])) seen++;
+        pos++;
+      }
+      // Se placer après l'espace plutôt qu'avant, pour que la frappe continue
+      // naturellement au début d'un nouveau groupe.
+      if (formatted[pos] === ' ') pos++;
+
+      try { input.setSelectionRange(pos, pos); } catch (err) { /* champ non sélectionnable */ }
+    }
+
+    input.addEventListener('input', apply);
+    // Un collage arrive parfois avant l'événement input sur certains mobiles.
+    input.addEventListener('paste', function () { window.setTimeout(apply, 0); });
+  }
+
   /* ── Compte à rebours ──────────────────────────────────────────────── */
   function initCountdown() {
     var root = document.querySelector('[data-countdown]');
@@ -70,6 +124,8 @@ window.WeddingRSVP = (function () {
     var done = document.querySelector('[data-rsvp-done]');
     var defaultLabel = buttonLabel ? buttonLabel.textContent : 'Confirmer ma présence';
 
+    attachPhoneMask(form.elements.telephone);
+
     function showError(name, show) {
       var node = form.querySelector('[data-error-for="' + name + '"]');
       if (node) node.hidden = !show;
@@ -85,13 +141,21 @@ window.WeddingRSVP = (function () {
     function validate(raw) {
       var ok = true;
 
-      ['prenom', 'nom', 'telephone', 'accompagne', 'relation'].forEach(function (name) {
+      ['prenom', 'nom', 'accompagne', 'relation'].forEach(function (name) {
         var invalid = !raw[name];
         showError(name, invalid);
         if (invalid) ok = false;
       });
 
-      var emailInvalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw.email || '');
+      // 10 chiffres, commençant par 0 — mêmes règles que le serveur, qui reste
+      // l'autorité (PRD §6).
+      var phoneInvalid = !/^0\d{9}$/.test(phoneDigits(raw.telephone));
+      showError('telephone', phoneInvalid);
+      if (phoneInvalid) ok = false;
+
+      // Email facultatif : vérifié seulement s'il est renseigné.
+      var email = (raw.email || '').trim();
+      var emailInvalid = email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       showError('email', emailInvalid);
       if (emailInvalid) ok = false;
 
@@ -151,8 +215,10 @@ window.WeddingRSVP = (function () {
           nom: raw.nom,
           accompagne: raw.accompagne === 'oui',
           relation: raw.relation,
-          email: raw.email,
-          telephone: raw.telephone
+          // Envoyé en chiffres seuls : le serveur normalise de son côté, mais
+          // autant ne pas lui transmettre la mise en forme d'affichage.
+          telephone: phoneDigits(raw.telephone),
+          email: (raw.email || '').trim() || null
         })
       })
         .then(function (response) {

@@ -206,6 +206,7 @@
 .table tbody tr:hover { background: rgba(201, 162, 39, 0.05); }
 
 .table a { color: var(--emerald); }
+.table__empty { opacity: 0.45; }
 
 .table__actions { display: flex; gap: 8px; }
 

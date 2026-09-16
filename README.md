@@ -456,10 +456,80 @@ affiché · boutons carte et agenda présents · 2ᵉ visite ne rejouant pas le 
 
 ---
 
+## Notes techniques — Formulaire (email facultatif, numéro ivoirien)
+
+### Le téléphone porte désormais l'unicité
+
+L'email est devenu **facultatif** et passe en **dernier champ**. Conséquence directe : il ne
+pouvait plus servir de clé de dédoublonnage, une colonne nullable ne portant pas une garantie
+« une confirmation par invité » (PRD §3.1). C'est le **téléphone** qui tient ce rôle — il est
+obligatoire et chaque invité en a un.
+
+| Champ | Avant | Après |
+|---|---|---|
+| `email` | requis, `@unique` | **facultatif**, `@unique` quand renseigné (MySQL tolère plusieurs NULL) |
+| `telephone` | requis, non unique | requis, **`@unique`** — clé de dédoublonnage |
+
+Le numéro est **stocké en 10 chiffres sans espaces**. Sans cette normalisation,
+« 07 12 34 56 78 » et « 0712345678 » seraient deux invités différents et la règle d'unicité
+cesserait silencieusement de fonctionner. Vérifié : saisir l'un après l'autre renvoie bien la
+carte existante.
+
+Le dédoublonnage interroge le téléphone **et** l'email quand il est fourni, pour qu'un invité
+ayant confirmé avec son adresse et revenant depuis un autre téléphone retombe sur sa carte au
+lieu d'en créer une seconde.
+
+### Masque de saisie du numéro
+
+Format ivoirien : 10 chiffres, groupés par deux — `07 12 34 56 78`, repris en `placeholder`.
+Validation : 10 chiffres commençant par `0`. Le préfixe opérateur (01/05/07) n'est
+volontairement **pas** codé en dur — rejeter le vrai numéro d'un invité serait pire que
+d'accepter un numéro atypique, et la liste des préfixes évolue.
+
+La mise en forme se fait pendant la frappe, avec **repositionnement manuel du curseur** :
+réécrire `value` le renvoie sinon systématiquement en fin de champ, ce qui rend toute
+correction au milieu du numéro impossible. Cas vérifiés en navigateur : frappe chiffre à
+chiffre, 11ᵉ chiffre bloqué, insertion au milieu, lettres ignorées, collage d'un format
+différent (`07-12-34-56-78`).
+
+`inputmode="numeric"` fait apparaître le pavé numérique sur mobile.
+
+### Lisibilité corrigée sur le formulaire
+
+Deux défauts relevés à la mesure, pas à l'œil :
+
+- le **placeholder** utilisait le gris par défaut du navigateur (`#757575`), prévu pour un
+  fond clair : **1,35:1** sur l'émeraude, donc invisible — alors que c'est ce texte qui
+  indique le format attendu. Passé à du crème atténué, ~3,6:1 ;
+- le marqueur **« facultatif »** tombait à 9,4 px en le dimensionnant en `em`. Il garde
+  maintenant le corps du libellé (10,9 px) et se met en retrait par la graisse et l'opacité.
+
+## Notes techniques — Aperçu de partage (Open Graph)
+
+Le lien circulera surtout sur WhatsApp, où l'aperçu fait la première impression.
+
+**Image dédiée** : `public/images/og-cover.jpg`, 1200×630, générée par
+`node scripts/build-og-image.js` et commitée — aucune dépendance à l'exécution. À relancer si
+la photo ou la date changent. La photo du couple est en portrait (843×1264) ; livrée telle
+quelle, la plateforme l'aurait recadrée d'elle-même, en pratique sur le torse du marié, sans
+les visages ni les prénoms.
+
+**URL absolues obligatoires** : les robots des messageries ne résolvent pas un chemin relatif,
+et l'aperçu sortirait sans image.
+
+**Page d'invitation** : aperçu volontairement **générique**, sans le nom de l'invité et sans
+`og:url`. Cette page est personnelle et son adresse est la seule barrière d'accès à la carte —
+le nom n'a pas à s'afficher dans une vignette relayée à un groupe.
+
+Un `favicon.svg` (monogramme F&C) et son repli `.ico` complètent l'ensemble ; l'onglet
+affichait jusque-là une icône cassée.
+
+---
+
 ### Findings Semgrep connus (non corrigés à ce stade)
 
-Après la phase 6, `semgrep ci --config auto` remonte 11 findings. Neuf sont des faux positifs
-analysés un par un :
+`semgrep ci --config auto` remonte 13 findings. Onze sont des faux positifs analysés un
+par un :
 
 | Finding | Verdict |
 |---|---|
@@ -468,6 +538,7 @@ analysés un par un :
 | `var-in-script-tag` (`invitation.ejs`) | Attributs `data-*` échappés sur une balise `<script src>` sans corps inline |
 | `direct-response-write` (`card.js`) | Envoi d'un `Buffer` binaire avec un `Content-Type` fixe, pas du HTML reflété |
 | `path-join-resolve-traversal` (`pdf.service.js`) | Noms de fichiers de polices codés en dur, aucune donnée de requête |
+| `path-join-resolve-traversal` + `puppeteer-setcontent-injection` (`scripts/build-og-image.js`) | Script de build lancé à la main : il lit deux fichiers locaux au chemin codé en dur et n'assemble que des chaînes littérales. Aucune donnée de requête n'y entre |
 | `express-check-csurf-middleware-usage` | `sameSite: 'strict'` : un POST cross-site arrive sans cookie de session, donc non authentifié (voir Phase 6) |
 | `express-cookie-session-no-secure` | `secure: isProduction` est une variable, que la règle ne sait pas évaluer — **`Secure` vérifié présent** dans l'en-tête réel en production |
 | `express-cookie-session-no-expires` | `maxAge` est défini ; express-session en dérive `Expires`, **constaté dans l'en-tête réel** |

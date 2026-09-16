@@ -11,16 +11,42 @@ datasource db {
 }
 
 model Rsvp {
-  id           String   @id @default(uuid()) // public reference, used in the URL and the QR code
-  nom          String
-  prenom       String
-  accompagne   Boolean  @default(false)
-  relation     String // "PARENT_MARIE" | "AMI_MARIE" | "PARENT_MARIEE" | "AMI_MARIEE"
-  email        String   @unique
-  telephone    String
+  id         String  @id @default(uuid()) // public reference, used in the URL and the QR code
+  nom        String
+  prenom     String
+  accompagne Boolean @default(false)
+  relation   String // "PARENT_MARIE" | "AMI_MARIE" | "PARENT_MARIEE" | "AMI_MARIEE"
+
+  // The phone number is what guarantees one RSVP per guest (PRD §3.1).
+  // It moved into that role when the email became optional: a nullable column
+  // cannot anchor a uniqueness rule, and every guest has a phone.
+  // Stored as 10 digits with no spaces, so "07 12 34 56 78" and "0712345678"
+  // are recognised as the same person.
+  telephone String @unique
+
+  // Optional, and last on the form. Unique when present — MySQL allows several
+  // NULLs in a unique index, so guests without an address do not collide.
+  email String? @unique
+
   icsDeclenche Boolean  @default(false)
   cardMinioKey String?
   createdAt    DateTime @default(now())
+}
+
+/// Admin session store, created and written by `express-mysql-session`
+/// (config/session.js) — Prisma never reads or writes it.
+///
+/// Declared here only so Prisma stops seeing it as schema drift. Without this,
+/// every `prisma migrate dev` reports an untracked table and offers to **reset
+/// the database** — an offer that, accepted once on a tired evening, would take
+/// the whole guest list with it.
+///
+/// The definition mirrors the table express-mysql-session creates, so it finds
+/// what it expects and leaves it alone.
+model sessions {
+  session_id String @id @db.VarChar(128)
+  expires    Int    @db.UnsignedInt
+  data       String? @db.MediumText
 }
 
 model AdminUser {

@@ -419,6 +419,21 @@
   letter-spacing: 0.14em;
 }
 
+/* Marqueur discret sur le libellé d'un champ facultatif : l'invité doit voir
+   d'un coup d'œil qu'il peut passer outre, sans que ça concurrence le libellé. */
+.field__optional {
+  margin-left: 0.5em;
+  font-weight: 400;
+  /* Même corps que le libellé : le distinguer par la taille le faisait tomber
+     sous 10 px, illisible. C'est la graisse et l'opacité qui le mettent en
+     retrait, pas une réduction. */
+  font-size: inherit;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-variant: small-caps;
+  opacity: 0.72;
+}
+
 .field__input {
   width: 100%;
   padding: 13px 14px;
@@ -429,6 +444,15 @@
   font-family: var(--font-body);
   font-size: 1.02rem;
   transition: border-color var(--dur-mid) var(--ease-out);
+}
+
+/* Le gris par défaut du navigateur est prévu pour un fond clair : sur
+   l'émeraude il tombe à 1,35:1, illisible — or c'est ce texte qui indique le
+   format attendu du numéro. Crème atténué : ~3,6:1, lisible sans rivaliser
+   avec la valeur réellement saisie. */
+.field__input::placeholder {
+  color: rgba(253, 251, 246, 0.62);
+  opacity: 1; /* Firefox applique sinon une opacité supplémentaire */
 }
 
 .field__input:focus { border-color: var(--gold); outline: none; }

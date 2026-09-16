@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Confirmations — Backoffice</title>
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="stylesheet" href="/shared/fonts.css">
 <link rel="stylesheet" href="/shared/palette.css">
 <link rel="stylesheet" href="/stylesheets/style.css">
@@ -69,8 +71,18 @@
           <% rsvps.forEach(function (r) { %>
             <tr>
               <td data-label="Nom"><%= r.prenom %> <%= r.nom %></td>
-              <td data-label="Email"><a href="mailto:<%= r.email %>"><%= r.email %></a></td>
-              <td data-label="Téléphone"><a href="tel:<%= r.telephone %>"><%= r.telephone %></a></td>
+              <td data-label="Email">
+                <%# L'email est facultatif depuis que le téléphone porte l'unicité. %>
+                <% if (r.email) { %>
+                  <a href="mailto:<%= r.email %>"><%= r.email %></a>
+                <% } else { %>
+                  <span class="table__empty">—</span>
+                <% } %>
+              </td>
+              <td data-label="Téléphone">
+                <%# Stocké en chiffres bruts, présenté groupé par deux. %>
+                <a href="tel:<%= r.telephone %>"><%= (r.telephone.match(/.{1,2}/g) || []).join(' ') %></a>
+              </td>
               <td data-label="Accompagné"><%= r.accompagne ? 'Oui' : 'Non' %></td>
               <td data-label="Relation">
                 <%

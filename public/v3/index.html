@@ -7,8 +7,29 @@
 <meta name="description" content="Franckesky et Charlène vous convient à célébrer leur union, le 10 octobre 2026 à Abidjan. Confirmez votre présence.">
 <meta name="theme-color" content="#046241">
 
+<!-- Open Graph / Twitter : aperçu du lien quand il circule, notamment sur
+     WhatsApp. Les URL doivent être absolues — un chemin relatif n'est pas
+     résolu par les robots des messageries, et l'aperçu sort sans image. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Franckesky &amp; Charlène">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://franckeskyetcharlene.geasscorp.com/v3">
+<meta property="og:title" content="Franckesky &amp; Charlène — 10 octobre 2026">
+<meta property="og:description" content="Franckesky et Charlène vous convient à célébrer leur union, le samedi 10 octobre 2026 à Abidjan. Confirmez votre présence.">
+<meta property="og:image" content="https://franckeskyetcharlene.geasscorp.com/images/og-cover.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Franckesky et Charlène, mariage le 10 octobre 2026 à Abidjan">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Franckesky &amp; Charlène — 10 octobre 2026">
+<meta name="twitter:description" content="Franckesky et Charlène vous convient à célébrer leur union, le samedi 10 octobre 2026 à Abidjan. Confirmez votre présence.">
+<meta name="twitter:image" content="https://franckeskyetcharlene.geasscorp.com/images/og-cover.jpg">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="stylesheet" href="/shared/fonts.css">
 <link rel="stylesheet" href="/shared/palette.css">
 <link rel="stylesheet" href="/v3/styles.css">
@@ -186,15 +207,21 @@
         </fieldset>
 
         <div class="field" data-field>
-          <label class="field__label t-label" for="v3-email">Email</label>
-          <input class="field__input" id="v3-email" name="email" type="email" autocomplete="email" required maxlength="160">
-          <p class="field__error" data-error-for="email" hidden>Email invalide</p>
+          <label class="field__label t-label" for="v3-telephone">Numéro de contact</label>
+          <!-- inputmode=numeric fait sortir le pavé numérique sur mobile ;
+               maxlength=14 correspond aux 10 chiffres plus les 4 espaces. -->
+          <input class="field__input" id="v3-telephone" name="telephone" type="tel"
+                 inputmode="numeric" autocomplete="tel" required
+                 placeholder="07 12 34 56 78" maxlength="14">
+          <p class="field__error" data-error-for="telephone" hidden>Numéro à 10 chiffres, commençant par 0</p>
         </div>
 
         <div class="field" data-field>
-          <label class="field__label t-label" for="v3-telephone">Numéro de contact</label>
-          <input class="field__input" id="v3-telephone" name="telephone" type="tel" autocomplete="tel" required maxlength="30">
-          <p class="field__error" data-error-for="telephone" hidden>Champ requis</p>
+          <label class="field__label t-label" for="v3-email">
+            Email <span class="field__optional">facultatif</span>
+          </label>
+          <input class="field__input" id="v3-email" name="email" type="email" autocomplete="email" maxlength="160">
+          <p class="field__error" data-error-for="email" hidden>Email invalide</p>
         </div>
 
         <button class="submit t-label" type="submit" data-submit>
