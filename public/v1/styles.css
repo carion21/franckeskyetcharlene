@@ -104,37 +104,70 @@
   text-align: center;
 }
 
-/* Photo du couple. Le dégradé sous-jacent reste déclaré : si le fichier venait
-   à manquer, le hero garde un fond correct plutôt qu'une image cassée. */
+/* Les alliances gravées sur la plaque de marbre, et non la photo du couple :
+   v1 s'ouvre comme un carton d'invitation, ce que prolongent ensuite ses
+   blocs encadrés d'or. Les deux autres versions gardent la photo.
+
+   Le fichier est un recadrage de l'image d'origine (scripts/build-alliance-hero.js),
+   pas la source brute : celle-ci porte un monogramme qui n'est pas celui des
+   mariés et tout un décor de nappe autour de la plaque.
+
+   Le dégradé sous-jacent reste déclaré : si le fichier venait à manquer, le
+   hero garde un fond correct plutôt qu'une image cassée. */
 .hero__photo {
   position: absolute;
   inset: 0;
   background-color: var(--emerald-light);
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
-    url('/images/couple.jpeg');
-  background-size: cover;
-  /* Photo portrait, visages dans le tiers haut : on ancre le cadrage en haut
-     pour ne pas les rogner sur un viewport large. */
-  background-position: center 22%;
-  /* Assez présente pour qu'on reconnaisse le couple — c'est leur photo. La
-     lisibilité du texte est assurée par le voile ci-dessous, pas en effaçant
-     l'image. */
-  opacity: 0.92;
+    url('/images/alliance-hero.jpg');
+  /* La plaque se pose en haut de page comme une carte, et s'arrête où elle
+     s'arrête : les prénoms et le compte à rebours viennent sous elle, sur
+     l'émeraude. En `cover`, les anneaux étaient agrandis au point d'être
+     coupés des deux côtés, et le nom leur passait au travers.
+
+     Deux limites, celle qui se déclenche la première gagne : jamais plus
+     large que l'écran (téléphone), jamais plus haute que les deux tiers du
+     hero (grand écran, où caler sur la largeur ferait des alliances de 70 cm).
+     83.4svh = 66 % de hauteur ramenés en largeur par le rapport de l'image. */
+  background-size: min(100%, 83.4svh) auto;
+  background-repeat: no-repeat;
+  background-position: center top;
+  /* La plaque se dissout dans l'émeraude de la page au lieu de s'arrêter net.
+     Sans ce fondu, sa limite basse se lit comme une bande collée en travers
+     de l'écran, d'autant que le voile assombrit le bas de l'image juste
+     au-dessus d'un fond plus clair.
+
+     Le fondu doit finir exactement là où l'image finit, donc il reprend les
+     deux mêmes limites : 79.1vw = la hauteur atteinte quand l'image est calée
+     sur la largeur (660×522 dans alliance-hero.jpg), 66svh quand c'est la
+     hauteur qui plafonne. Recadrer la source dans un autre rapport oblige à
+     recalculer ces nombres — scripts/build-alliance-hero.js le rappelle. */
+  -webkit-mask-image: linear-gradient(180deg,
+    #000 calc(min(79.1vw, 66svh) - 110px), transparent min(79.1vw, 66svh));
+  mask-image: linear-gradient(180deg,
+    #000 calc(min(79.1vw, 66svh) - 110px), transparent min(79.1vw, 66svh));
+  /* Le zoom lent part du haut : centré, il chasserait les alliances hors du
+     cadre, puisqu'elles sont contre le bord supérieur de l'image. */
+  transform-origin: center top;
+  /* Presque opaque : l'image est déjà dans la palette de la page, il n'y a
+     rien à atténuer. La lisibilité du texte vient du voile ci-dessous. */
+  opacity: 0.96;
   will-change: transform;
 }
 
 .hero__veil {
   position: absolute;
   inset: 0;
-  /* Voile modulé : discret sur les visages, plus dense derrière le nom et le
-     compte à rebours, où le texte doit rester lisible. */
+  /* Voile modulé : très léger en haut, où les alliances doivent rester
+     franches, puis de plus en plus dense en descendant vers le nom et le
+     compte à rebours, qui ont besoin d'un fond calme. */
   background:
     linear-gradient(180deg,
-      rgba(2, 56, 35, 0.55) 0%,
-      rgba(2, 56, 35, 0.28) 22%,
-      rgba(2, 56, 35, 0.62) 46%,
-      rgba(2, 56, 35, 0.80) 72%,
+      rgba(2, 56, 35, 0.34) 0%,
+      rgba(2, 56, 35, 0.18) 20%,
+      rgba(2, 56, 35, 0.45) 44%,
+      rgba(2, 56, 35, 0.74) 70%,
       rgba(2, 56, 35, 0.92) 100%);
 }
 

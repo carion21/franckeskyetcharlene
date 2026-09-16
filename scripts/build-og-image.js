@@ -1,16 +1,25 @@
 #!/usr/bin/env node
 /**
- * Génère l'image de partage (Open Graph) : public/images/og-cover.jpg
+ * Génère les images de partage (Open Graph) :
+ *
+ *   public/images/og-cover.jpg      la photo du couple — /v2, /v3, /invitation
+ *   public/images/og-alliance.jpg   les alliances — /v1, qui n'affiche plus la photo
  *
  *   node scripts/build-og-image.js
  *
- * Script ponctuel — l'image produite est commitée, le site n'en dépend pas à
- * l'exécution. À relancer si la photo du couple ou la date changent.
+ * Script ponctuel — les images produites sont commitées, le site n'en dépend
+ * pas à l'exécution. À relancer si une image source ou la date change.
  *
- * Pourquoi une image dédiée plutôt que la photo telle quelle : la photo est en
- * portrait (843×1264) alors que WhatsApp et Facebook attendent du 1200×630.
- * Livrée brute, elle serait recadrée par la plateforme, au petit bonheur — en
- * pratique sur le torse du marié, sans les visages ni les prénoms.
+ * Pourquoi des images dédiées plutôt que les photos telles quelles : elles sont
+ * en portrait (843×1264) ou carrées (1024×1024) alors que WhatsApp et Facebook
+ * attendent du 1200×630. Livrées brutes, elles seraient recadrées par la
+ * plateforme, au petit bonheur — en pratique sur le torse du marié, sans les
+ * visages ni les prénoms.
+ *
+ * Les deux variantes partagent le même gabarit : même cadre doré, mêmes
+ * prénoms, même date. Seuls changent l'image de fond et la façon de la poser —
+ * une photo se laisse recadrer en plein cadre, une plaque gravée non : elle a
+ * des bords, et on les voit.
  */
 
 var fs = require('fs');
@@ -19,8 +28,35 @@ var puppeteer = require('puppeteer');
 
 var ROOT = path.join(__dirname, '..');
 var FONT_DIR = path.join(ROOT, 'assets', 'fonts');
-var PHOTO = path.join(ROOT, 'public', 'images', 'couple.jpeg');
-var OUT = path.join(ROOT, 'public', 'images', 'og-cover.jpg');
+var IMAGES = path.join(ROOT, 'public', 'images');
+
+var VARIANTES = [
+  {
+    // Photo du couple, en plein cadre, ancrée haut : les visages sont dans le
+    // tiers supérieur, un cadrage centré les couperait sur un format aussi large.
+    source: 'couple.jpeg',
+    sortie: 'og-cover.jpg',
+    fond: 'background-size: cover; background-position: center 18%;',
+    // Voile dégradé depuis la gauche : le couple reste lisible à droite,
+    // le texte repose sur une zone assez dense à gauche.
+    voile:
+      'linear-gradient(90deg, rgba(2,56,35,.95) 0%, rgba(2,56,35,.86) 42%, rgba(2,56,35,.42) 68%, rgba(2,56,35,.30) 100%),' +
+      'linear-gradient(180deg, rgba(2,56,35,.30), rgba(2,56,35,.55))'
+  },
+  {
+    // Les alliances : le recadrage déjà fait pour le hero (plaque seule, sans
+    // le monogramme étranger ni la nappe). Posée entière à droite plutôt que
+    // recadrée en plein cadre — une plaque coupée en deux ne se lit plus.
+    source: 'alliance-hero.jpg',
+    sortie: 'og-alliance.jpg',
+    fond: 'background-size: auto 118%; background-position: right -40px top -34px;',
+    // Voile plus franc à gauche, presque rien à droite : les anneaux doivent
+    // rester nets, le texte a besoin d'un fond calme.
+    voile:
+      'linear-gradient(90deg, rgba(2,56,35,.96) 0%, rgba(2,56,35,.90) 40%, rgba(2,56,35,.30) 66%, rgba(2,56,35,.12) 100%),' +
+      'linear-gradient(180deg, rgba(2,56,35,.22), rgba(2,56,35,.42))'
+  }
+];
 
 // Format de référence des aperçus de lien.
 var WIDTH = 1200;
@@ -30,8 +66,8 @@ function b64(file) {
   return fs.readFileSync(path.join(FONT_DIR, file)).toString('base64');
 }
 
-function buildHtml() {
-  var photo = fs.readFileSync(PHOTO).toString('base64');
+function buildHtml(variante) {
+  var photo = fs.readFileSync(path.join(IMAGES, variante.source)).toString('base64');
 
   return `<!doctype html>
 <html><head><meta charset="utf-8"><style>
@@ -47,20 +83,15 @@ function buildHtml() {
   html, body { margin: 0; width: ${WIDTH}px; height: ${HEIGHT}px; }
   .cover { position: relative; width: ${WIDTH}px; height: ${HEIGHT}px; overflow: hidden; background: #046241; }
 
-  /* Photo ancrée haut : les visages sont dans le tiers supérieur, un cadrage
-     centré les couperait sur un format aussi large. */
   .photo {
     position: absolute; inset: 0;
     background-image: url('data:image/jpeg;base64,${photo}');
-    background-size: cover; background-position: center 18%;
+    background-repeat: no-repeat;
+    ${variante.fond}
   }
-  /* Voile dégradé depuis la gauche : le couple reste lisible à droite,
-     le texte repose sur une zone assez dense à gauche. */
   .veil {
     position: absolute; inset: 0;
-    background:
-      linear-gradient(90deg, rgba(2,56,35,.95) 0%, rgba(2,56,35,.86) 42%, rgba(2,56,35,.42) 68%, rgba(2,56,35,.30) 100%),
-      linear-gradient(180deg, rgba(2,56,35,.30), rgba(2,56,35,.55));
+    background: ${variante.voile};
   }
 
   .frame { position: absolute; top: 26px; left: 26px; right: 26px; bottom: 26px; border: 2px solid #C9A227; }
@@ -102,19 +133,25 @@ function buildHtml() {
 
   try {
     await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
-    await page.setContent(buildHtml(), { waitUntil: 'load' });
-    await page.evaluate(function () { return document.fonts.ready; });
 
-    // JPEG plutôt que PNG : l'image est photographique, et certains clients de
-    // messagerie ignorent un aperçu trop lourd.
-    var buffer = await page.screenshot({
-      type: 'jpeg',
-      quality: 88,
-      clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT }
-    });
+    for (var i = 0; i < VARIANTES.length; i++) {
+      var variante = VARIANTES[i];
+      var out = path.join(IMAGES, variante.sortie);
 
-    fs.writeFileSync(OUT, buffer);
-    console.log('Image de partage écrite : %s (%d Ko)', path.relative(ROOT, OUT), Math.round(buffer.length / 1024));
+      await page.setContent(buildHtml(variante), { waitUntil: 'load' });
+      await page.evaluate(function () { return document.fonts.ready; });
+
+      // JPEG plutôt que PNG : l'image est photographique, et certains clients
+      // de messagerie ignorent un aperçu trop lourd.
+      var buffer = await page.screenshot({
+        type: 'jpeg',
+        quality: 88,
+        clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT }
+      });
+
+      fs.writeFileSync(out, buffer);
+      console.log('Image de partage écrite : %s (%d Ko)', path.relative(ROOT, out), Math.round(buffer.length / 1024));
+    }
   } finally {
     await page.close();
     await browser.close();

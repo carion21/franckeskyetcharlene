@@ -84,9 +84,12 @@
     gsap.from('.hero__place', { opacity: 0, y: 12, duration: 0.8, ease: 'power2.out', delay: 3.25 });
     gsap.from('.countdown', { opacity: 0, y: 20, duration: 0.9, ease: 'power2.out', delay: 3.4 });
 
-    // Ken Burns : lent, en boucle alternée.
+    // Ken Burns : lent, en boucle alternée. Amplitude volontairement plus
+    // faible ici que sur les autres versions : le fond n'est pas une photo
+    // mais une plaque gravée, aux bords droits et au décor symétrique — à
+    // 1.09 on voyait le cadre doré glisser sous les prénoms.
     gsap.fromTo('[data-kenburns]',
-      { scale: 1.09 },
+      { scale: 1.04 },
       { scale: 1, duration: 22, ease: 'none', repeat: -1, yoyo: true }
     );
 
