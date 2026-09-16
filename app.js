@@ -92,24 +92,56 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  res.status(err.status || 500);
+  var status = err.status || 500;
+  res.status(status);
 
   // API callers get JSON — an HTML error page would surface as an unreadable
   // blob in the RSVP form's status line.
   if (req.path.indexOf('/api/') === 0) {
     return res.json({
       success: false,
-      message: err.status === 404
+      message: status === 404
         ? 'Introuvable.'
         : 'Une erreur est survenue. Merci de réessayer.'
     });
   }
 
-  res.render('error');
+  // A dead invitation link is the 404 a guest is most likely to hit — from a
+  // bookmark, or by scanning a printed card whose record no longer exists.
+  // Telling them "page not found" leaves them stuck holding an invitation;
+  // pointing them at the form lets them confirm again and get a new card.
+  var invitationPerdue = status === 404 && /^\/invitation\//.test(req.path);
+
+  var titre;
+  var message;
+
+  if (invitationPerdue) {
+    titre = 'Cette invitation est introuvable';
+    message = "Le lien ou le QR code ne correspond à aucune confirmation. " +
+      "Il a pu expirer, ou avoir été mal recopié. Confirmez à nouveau votre " +
+      "présence pour recevoir une nouvelle carte — ou écrivez-nous, on s'en occupe.";
+  } else if (status === 404) {
+    titre = 'Cette page n\'existe pas';
+    message = "Le lien semble incomplet ou dépassé. L'invitation, elle, est " +
+      'toujours là.';
+  } else {
+    titre = 'Quelque chose s\'est mal passé';
+    message = 'Un incident nous empêche d\'afficher cette page. Réessayez dans ' +
+      'un instant ; si cela persiste, écrivez-nous directement.';
+  }
+
+  // The stack is never rendered. Beyond leaking internals, it is meaningless
+  // to a guest — it is logged server-side instead, where it is of use.
+  if (status >= 500) {
+    console.error('[error] %s %s — %s', req.method, req.originalUrl, err.stack || err.message);
+  }
+
+  res.render('error', {
+    status: status,
+    titre: titre,
+    message: message,
+    invitationPerdue: invitationPerdue
+  });
 });
 
 module.exports = app;

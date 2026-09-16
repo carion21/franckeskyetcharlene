@@ -3,22 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Votre invitation — Franckesky &amp; Charlène</title>
+<title><%= rsvp.prenom %> <%= rsvp.nom %> — Invitation au mariage de Franckesky &amp; Charlène</title>
 <meta name="theme-color" content="#046241">
 
-<%# Aperçu de partage volontairement générique : la page est personnelle, et
-    le nom de l'invité n'a pas à s'afficher dans une vignette relayée à un
-    groupe. Pas d'og:url non plus — cette adresse est la seule barrière
-    d'accès à la carte. %>
+<%# L'aperçu de partage nomme l'invité (demande explicite). Conséquence
+    assumée : le nom apparaît dans toute vignette relayée à un groupe.
+    Pas d'og:url en revanche — cette adresse reste la seule barrière d'accès
+    à la carte, elle ne doit pas se retrouver dans une vignette.
+    L'og:image est absolue (PUBLIC_BASE_URL) : aucun crawler ne résout une
+    URL relative. %>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Franckesky &amp; Charlène">
 <meta property="og:locale" content="fr_FR">
-<meta property="og:title" content="Franckesky &amp; Charlène — 10 octobre 2026">
-<meta property="og:description" content="Votre carte d'invitation au mariage de Franckesky et Charlène.">
-<meta property="og:image" content="https://franckeskyetcharlene.geasscorp.com/images/og-cover.jpg">
+<meta property="og:title" content="<%= rsvp.prenom %> <%= rsvp.nom %> — Invitation au mariage de Franckesky &amp; Charlène">
+<meta property="og:description" content="<%= rsvp.prenom %>, votre carte d'invitation personnelle pour le mariage de Franckesky et Charlène, le <%= dateMariage %>.">
+<meta property="og:image" content="<%= baseUrl %>/images/og-cover.jpg">
+<meta property="og:image:secure_url" content="<%= baseUrl %>/images/og-cover.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Franckesky &amp; Charlène — samedi 10 octobre 2026, Abidjan">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<%= rsvp.prenom %> <%= rsvp.nom %> — Invitation au mariage de Franckesky &amp; Charlène">
+<meta name="twitter:description" content="<%= rsvp.prenom %>, votre carte d'invitation personnelle pour le mariage de Franckesky et Charlène, le <%= dateMariage %>.">
+<meta name="twitter:image" content="<%= baseUrl %>/images/og-cover.jpg">
 <%# Page personnelle : jamais indexée, jamais partagée aux moteurs. %>
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">

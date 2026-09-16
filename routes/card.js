@@ -66,6 +66,9 @@ router.get('/invitation/:id', async function (req, res, next) {
       autoIcs: autoIcs,
       qrDataUri: qrDataUri,
       invitationUrl: qrcodeService.invitationUrl(rsvp.id),
+      // Absolute base for the Open Graph image: crawlers and messaging apps
+      // never resolve a relative og:image.
+      baseUrl: qrcodeService.PUBLIC_BASE_URL,
       dateMariage: pdfService.WEDDING_LABEL,
       cardAvailable: Boolean(rsvp.cardMinioKey)
     });

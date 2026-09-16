@@ -119,34 +119,76 @@
 .topbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px 14px;
   align-items: center;
   justify-content: space-between;
-  padding: 14px clamp(16px, 4vw, 28px);
+  padding: 12px clamp(14px, 4vw, 28px);
   background: var(--emerald);
   color: var(--cream);
 }
 
-.topbar__left, .topbar__right {
+.topbar__left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
 }
 
-.topbar__mark { font-family: var(--font-script); font-size: 26px; }
-.topbar__title { color: var(--gold-on-emerald); font-size: 0.7rem; }
-.topbar__user { color: var(--cream-dim); font-size: 0.64rem; }
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* `min-width: 0` est indispensable : un élément flex refuse par défaut de
+     descendre sous sa largeur de contenu, et l'identifiant admin est une
+     adresse email sans espace — donc insécable. Sans cette ligne, il pousse
+     le bouton de déconnexion hors de l'écran (mesuré : 449 px de contenu
+     pour 390 px de viewport). */
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.topbar__mark { font-family: var(--font-script); font-size: 24px; flex: none; }
+
+.topbar__title {
+  color: var(--gold-on-emerald);
+  font-size: 0.66rem;
+  flex: none;
+}
+
+/* Tronqué plutôt que masqué : savoir sous quel compte on est reste utile,
+   et « franckeskyetch… » le dit assez. */
+.topbar__user {
+  color: var(--cream-dim);
+  font-size: 0.6rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Le bouton ne se comprime jamais : c'est la seule sortie de la page. */
+.topbar__right .btn { flex: none; }
+
+/* Sous 420 px, l'identifiant complet ne laisse plus de place lisible au
+   bouton : on le retire plutôt que de l'afficher réduit à trois lettres. */
+@media (max-width: 420px) {
+  .topbar__user { display: none; }
+  .topbar__title { font-size: 0.6rem; }
+}
 
 /* ── Statistiques ────────────────────────────────────────────────────── */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
-  margin-bottom: 28px;
+  /* 130 px plutôt que 150 : à 390 px de large, deux colonnes tiennent sans
+     que la troisième carte reste orpheline sur une ligne à moitié vide. */
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
 .stat {
-  padding: 18px 20px;
+  padding: 14px 16px;
   border: 1px solid rgba(4, 98, 65, 0.18);
   border-radius: 8px;
   background: #fff;
@@ -158,10 +200,13 @@
   display: block;
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 2rem;
+  font-size: clamp(1.6rem, 6vw, 2rem);
   line-height: 1.1;
   color: var(--emerald);
-  font-variant-numeric: tabular-nums;
+  /* `lining-nums` est indispensable ici : Cormorant Garamond dessine par
+     défaut des chiffres elzéviriens, où le 1 est un trait bas qu'on lit « I ».
+     Élégant dans un texte courant, illisible dans un compteur. */
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .stat__label {
@@ -183,6 +228,8 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  /* Numéros de téléphone et dates : chiffres alignés, pour la même raison. */
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .table th, .table td {
