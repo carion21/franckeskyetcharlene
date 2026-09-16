@@ -4,7 +4,8 @@
  *   GET  /admin/login    the form
  *   POST /admin/login    bcrypt check, rate limited
  *   POST /admin/logout   ends the session
- *   GET  /admin          the RSVP list (protected)
+ *   GET  /admin          the RSVP list, filtered and sorted (protected)
+ *   GET  /admin/export.csv  the same list as a spreadsheet (protected)
  *
  * No email sending anywhere: explicitly out of scope (PRD §1.2).
  */
@@ -16,6 +17,34 @@ var router = express.Router();
 
 var prisma = require('../config/db');
 var requireAdminAuth = require('../middlewares/require-admin-auth');
+var guestList = require('../services/guest-list.service');
+var csvService = require('../services/csv.service');
+var qrcodeService = require('../services/qrcode.service');
+
+/**
+ * Abidjan time throughout the backoffice — the organiser's own clock, and the
+ * one the venue runs on. Server UTC would put a late-evening confirmation on
+ * the following day.
+ */
+var TIMEZONE = 'Africa/Abidjan';
+
+function formatDateAbidjan(date) {
+  return date.toLocaleString('fr-FR', {
+    timeZone: TIMEZONE,
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+/** `2026-09-16`, for the export filename — sorts right in a download folder. */
+function horodatageFichier() {
+  var parts = new Intl.DateTimeFormat('fr-CA', {
+    timeZone: TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+
+  return parts;
+}
 
 /**
  * A real bcrypt hash of a value nobody knows, used when the username does not
@@ -130,41 +159,110 @@ router.post('/admin/logout', function (req, res, next) {
   });
 });
 
+/**
+ * Loads every confirmation and turns it into a display row. Both the list and
+ * the export start here: the filtering that follows is the same function in
+ * both cases (services/guest-list.service.js).
+ *
+ * The whole table is read in one go rather than filtered in SQL. A wedding
+ * list is a few hundred rows — the query costs less than the round trips a
+ * clever paginated version would need, and it keeps the totals, the filter
+ * and the export reading from one identical snapshot.
+ */
+async function chargerLignes() {
+  var rsvps = await prisma.rsvp.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      prenom: true,
+      nom: true,
+      email: true,
+      telephone: true,
+      accompagne: true,
+      relation: true,
+      createdAt: true,
+      cardMinioKey: true
+    }
+  });
+
+  return rsvps.map(guestList.toLigne);
+}
+
 /* ── GET /admin ──────────────────────────────────────────────────────── */
 router.get('/admin', requireAdminAuth, async function (req, res, next) {
   try {
-    var rsvps = await prisma.rsvp.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        prenom: true,
-        nom: true,
-        email: true,
-        telephone: true,
-        accompagne: true,
-        relation: true,
-        createdAt: true,
-        cardMinioKey: true
-      }
-    });
-
-    // Counted in the query rather than in the page, so the totals stay right
-    // regardless of what the template chooses to display.
-    var stats = {
-      total: rsvps.length,
-      accompagnes: rsvps.filter(function (r) { return r.accompagne; }).length,
-      cartesManquantes: rsvps.filter(function (r) { return !r.cardMinioKey; }).length
-    };
-
-    // Each confirmed guest brings one extra person when accompanied.
-    stats.personnes = stats.total + stats.accompagnes;
+    var toutes = await chargerLignes();
+    var filtres = guestList.parseFiltres(req.query);
+    var lignes = guestList.appliquer(toutes, filtres);
 
     res.setHeader('Cache-Control', 'no-store');
     res.render('admin/dashboard', {
-      rsvps: rsvps,
-      stats: stats,
+      rsvps: lignes,
+      // Totals over the whole list, never over the filtered one: the tiles are
+      // the summary and the filter buttons at once (see the service).
+      stats: guestList.compterStats(toutes),
+      filtres: filtres,
+      filtresActifs: guestList.filtresActifs(filtres),
+      tris: guestList.TRIS,
+      relations: guestList.RELATIONS,
+      // Handed to the template so every link keeps the filters in force.
+      lien: function (patch, base) { return guestList.construireLien(filtres, patch, base); },
+      sensSuivant: function (key) { return guestList.sensSuivant(filtres, key); },
+      // Same formatting as the CSV export — one function, so a date can never
+      // read one way on screen and another in the file.
+      formatDate: formatDateAbidjan,
       adminUsername: req.admin.username
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ── GET /admin/export.csv ───────────────────────────────────────────── */
+/**
+ * The list as a spreadsheet, with the filters and the sort in force applied —
+ * the same query string the page is showing. Exporting the whole table while
+ * the screen shows one relation is how a seating plan ends up built from the
+ * wrong rows.
+ */
+router.get('/admin/export.csv', requireAdminAuth, async function (req, res, next) {
+  try {
+    var filtres = guestList.parseFiltres(req.query);
+    var lignes = guestList.appliquer(await chargerLignes(), filtres);
+
+    var entetes = [
+      'Prénom', 'Nom', 'Email', 'Téléphone', 'Accompagné', 'Personnes',
+      'Relation', 'Confirmé le', 'Carte générée', 'Lien invitation'
+    ];
+
+    var corps = lignes.map(function (l) {
+      return [
+        l.prenom,
+        l.nom,
+        l.email || '',
+        // Grouped rather than raw: a spreadsheet reads "0712345678" as a
+        // number and eats the leading zero, which makes the column useless
+        // for actually calling anyone.
+        l.telephoneFormate,
+        l.accompagne ? 'Oui' : 'Non',
+        l.personnes,
+        l.relationLabel,
+        formatDateAbidjan(l.createdAt),
+        l.carteGeneree ? 'Oui' : 'Non',
+        qrcodeService.invitationUrl(l.id)
+      ];
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    // `attachment` with an explicit name: without it the browser offers to
+    // save "export.csv" at best, and displays the raw text at worst.
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="confirmations-' + horodatageFichier() + '.csv"'
+    );
+
+    res.send(csvService.build(entetes, corps));
   } catch (err) {
     next(err);
   }

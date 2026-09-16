@@ -27,6 +27,14 @@
 
 <main class="admin__wrap">
 
+  <%#
+    Les tuiles sont à la fois le récapitulatif et les filtres : ce sont de
+    vrais liens vers /admin?…, donc elles fonctionnent sans JavaScript, se
+    partagent par URL et survivent à un rechargement. Les nombres qu'elles
+    portent restent ceux de la liste entière, jamais de la liste filtrée —
+    un compteur qui change quand on clique dessus ne laisse aucun repère
+    pour revenir au total.
+  %>
   <section class="stats" aria-label="Récapitulatif">
     <div class="stat">
       <span class="stat__value"><%= stats.total %></span>
@@ -36,40 +44,179 @@
       <span class="stat__value"><%= stats.personnes %></span>
       <span class="stat__label t-label">Personnes attendues</span>
     </div>
-    <div class="stat">
+
+    <a class="stat stat--lien<%= filtres.accompagne ? ' stat--actif' : '' %>"
+       href="<%= lien({ accompagne: !filtres.accompagne }) %>"
+       <%= filtres.accompagne ? 'aria-current="true"' : '' %>>
       <span class="stat__value"><%= stats.accompagnes %></span>
       <span class="stat__label t-label">Accompagnés</span>
-    </div>
+    </a>
+
     <% if (stats.cartesManquantes > 0) { %>
       <%# Visible seulement s'il y a réellement un problème : une carte non
           générée se régénère à la demande, mais mieux vaut le savoir. %>
-      <div class="stat stat--warn">
+      <a class="stat stat--warn stat--lien<%= filtres.sansCarte ? ' stat--actif' : '' %>"
+         href="<%= lien({ sansCarte: !filtres.sansCarte }) %>"
+         <%= filtres.sansCarte ? 'aria-current="true"' : '' %>>
         <span class="stat__value"><%= stats.cartesManquantes %></span>
         <span class="stat__label t-label">Cartes à régénérer</span>
-      </div>
+      </a>
     <% } %>
   </section>
 
-  <% if (rsvps.length === 0) { %>
+  <% if (stats.total > 0) { %>
+    <%# Répartition par relation : c'est la vue à partir de laquelle le plan
+        de table se construit. On compte les personnes (accompagnants
+        inclus), pas seulement les confirmations — une chaise par personne. %>
+    <section class="breakdown" aria-labelledby="breakdown-title">
+      <div class="breakdown__head">
+        <h2 class="breakdown__title t-label" id="breakdown-title">Répartition</h2>
+
+        <p class="breakdown__sides t-label">
+          <% stats.cotes.forEach(function (c, i) { %>
+            <%= i > 0 ? ' · ' : '' %><a class="breakdown__side<%= filtres.cote === c.key ? ' is-actif' : '' %>"
+               href="<%= lien({ cote: filtres.cote === c.key ? '' : c.key, relation: '' }) %>"
+               <%= filtres.cote === c.key ? 'aria-current="true"' : '' %>><%= c.label %> :
+              <strong><%= c.personnes %></strong> pers.</a>
+          <% }); %>
+        </p>
+      </div>
+
+      <div class="breakdown__grid">
+        <% stats.repartition.forEach(function (r) { %>
+          <%# Cliquer une tuile filtre la liste sur cette relation ; recliquer
+              la même l'enlève. Le filtre par côté est écarté au passage : les
+              deux se contrediraient (« amis du marié » + « côté mariée »). %>
+          <a class="stat stat--lien stat--<%= r.cote %><%= filtres.relation === r.key ? ' stat--actif' : '' %>"
+             href="<%= lien({ relation: filtres.relation === r.key ? '' : r.key, cote: '' }) %>"
+             <%= filtres.relation === r.key ? 'aria-current="true"' : '' %>>
+            <span class="stat__value"><%= r.confirmations %></span>
+            <span class="stat__label t-label"><%= r.label %></span>
+            <%# Le détail en personnes n'apparaît que s'il diffère : afficher
+                « 4 confirmations · 4 personnes » n'apprend rien. %>
+            <% if (r.personnes !== r.confirmations) { %>
+              <span class="stat__sub"><%= r.personnes %> personnes</span>
+            <% } %>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <% if (stats.total === 0) { %>
     <p class="empty t-verse">Aucune confirmation pour l'instant.</p>
   <% } else { %>
 
-    <div class="table-wrap">
+    <%#
+      Barre d'outils = un formulaire GET vers /admin. Sans JavaScript, Entrée
+      dans le champ ou le bouton « Filtrer » recharge la page filtrée côté
+      serveur ; avec JavaScript, la recherche s'applique à la frappe et le
+      bouton disparaît. Les filtres déjà actifs voyagent en champs cachés,
+      sinon une recherche les effacerait sans prévenir.
+    %>
+    <form class="toolbar" method="get" action="/admin" data-toolbar>
+      <% if (filtres.relation) { %><input type="hidden" name="relation" value="<%= filtres.relation %>"><% } %>
+      <% if (filtres.cote) { %><input type="hidden" name="cote" value="<%= filtres.cote %>"><% } %>
+      <% if (filtres.accompagne) { %><input type="hidden" name="accompagne" value="1"><% } %>
+      <% if (filtres.sansCarte) { %><input type="hidden" name="carte" value="manquante"><% } %>
+
+      <div class="field toolbar__search">
+        <label class="field__label t-label" for="recherche">Rechercher</label>
+        <input class="field__input" id="recherche" name="q" type="search"
+               value="<%= filtres.q %>"
+               placeholder="Nom, téléphone, email, relation…"
+               autocomplete="off" spellcheck="false" data-search-input>
+      </div>
+
+      <%#
+        Le tri se fait par clic sur l'en-tête de colonne — sauf sous 720 px,
+        où le tableau devient une pile de fiches et où les en-têtes
+        disparaissent. Ces deux listes déroulantes sont ce qui reste
+        utilisable là : masquées en CSS sur grand écran, mais toujours
+        envoyées avec le formulaire, pour qu'une recherche ne réinitialise
+        jamais le tri en cours.
+      %>
+      <div class="field toolbar__sort">
+        <label class="field__label t-label" for="tri">Trier par</label>
+        <select class="field__input" id="tri" name="tri" data-auto-submit>
+          <% tris.forEach(function (t) { %>
+            <option value="<%= t.key %>"<%= filtres.tri === t.key ? ' selected' : '' %>><%= t.label %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="field toolbar__sort">
+        <label class="field__label t-label" for="sens">Ordre</label>
+        <select class="field__input" id="sens" name="sens" data-auto-submit>
+          <option value="asc"<%= filtres.sens === 'asc' ? ' selected' : '' %>>Croissant</option>
+          <option value="desc"<%= filtres.sens === 'desc' ? ' selected' : '' %>>Décroissant</option>
+        </select>
+      </div>
+
+      <button class="btn btn--ghost btn--small t-label" type="submit" data-toolbar-submit>Filtrer</button>
+
+      <div class="toolbar__end">
+        <p class="toolbar__count t-label" role="status" data-search-count>
+          <%= rsvps.length %><%= rsvps.length > 1 ? ' confirmations' : ' confirmation' %><%= filtresActifs ? ' sur ' + stats.total : '' %>
+        </p>
+
+        <% if (filtresActifs) { %>
+          <a class="btn btn--ghost btn--small t-label" href="/admin" data-reset>Réinitialiser</a>
+        <% } %>
+
+        <%# L'export reprend exactement les filtres et le tri en cours : une
+            liste à l'écran et un fichier qui contient autre chose, c'est un
+            plan de table construit sur les mauvaises lignes. %>
+        <a class="btn btn--gold btn--small t-label"
+           href="<%= lien(null, '/admin/export.csv') %>"
+           data-export>Export CSV</a>
+      </div>
+    </form>
+
+    <% if (rsvps.length === 0) { %>
+      <p class="empty t-verse">
+        Aucun invité ne correspond à ces filtres.
+        <a href="/admin">Voir toute la liste</a>
+      </p>
+    <% } %>
+
+    <%# État vide de la recherche à la frappe, géré par shared/admin.js. %>
+    <p class="empty t-verse" data-search-empty hidden>Aucun invité ne correspond à cette recherche.</p>
+
+    <div class="table-wrap"<%= rsvps.length === 0 ? ' hidden' : '' %>>
       <table class="table">
         <thead>
           <tr>
-            <th scope="col">Nom</th>
-            <th scope="col">Email</th>
-            <th scope="col">Téléphone</th>
-            <th scope="col">Accompagné</th>
-            <th scope="col">Relation</th>
-            <th scope="col">Confirmé le</th>
+            <%#
+              Chaque en-tête triable est un lien qui reprend les filtres en
+              cours (voir construireLien) : trier ne doit jamais faire tomber
+              le filtre par relation en même temps.
+            %>
+            <% var colonnes = [
+                 { key: 'nom', label: 'Nom' },
+                 { key: 'email', label: 'Email' },
+                 { key: 'telephone', label: 'Téléphone' },
+                 { key: 'accompagne', label: 'Accompagné' },
+                 { key: 'relation', label: 'Relation' },
+                 { key: 'date', label: 'Confirmé le' }
+               ]; %>
+            <% colonnes.forEach(function (c) { %>
+              <% var actif = filtres.tri === c.key; %>
+              <th scope="col"
+                  aria-sort="<%= actif ? (filtres.sens === 'asc' ? 'ascending' : 'descending') : 'none' %>">
+                <a class="table__sort<%= actif ? ' is-actif' : '' %>"
+                   href="<%= lien({ tri: c.key, sens: sensSuivant(c.key) }) %>"><%= c.label %><% if (actif) { %><span class="table__arrow" aria-hidden="true"><%= filtres.sens === 'asc' ? '↑' : '↓' %></span><% } %></a>
+              </th>
+            <% }); %>
             <th scope="col"><span class="u-visually-hidden">Carte</span></th>
           </tr>
         </thead>
         <tbody>
           <% rsvps.forEach(function (r) { %>
-            <tr>
+            <%# `data-search-text` est assemblé côté service : le filtre ne
+                relit jamais le contenu des cellules, et cherche donc aussi le
+                numéro sous sa forme brute autant que groupée. %>
+            <tr data-search-text="<%= r.rechercheTexte %>">
               <td data-label="Nom"><%= r.prenom %> <%= r.nom %></td>
               <td data-label="Email">
                 <%# L'email est facultatif depuis que le téléphone porte l'unicité. %>
@@ -81,28 +228,14 @@
               </td>
               <td data-label="Téléphone">
                 <%# Stocké en chiffres bruts, présenté groupé par deux. %>
-                <a href="tel:<%= r.telephone %>"><%= (r.telephone.match(/.{1,2}/g) || []).join(' ') %></a>
+                <a href="tel:<%= r.telephone %>"><%= r.telephoneFormate %></a>
               </td>
               <td data-label="Accompagné"><%= r.accompagne ? 'Oui' : 'Non' %></td>
-              <td data-label="Relation">
-                <%
-                  var LABELS = {
-                    PARENT_MARIE: 'Parent du marié',
-                    AMI_MARIE: 'Ami(e) du marié',
-                    PARENT_MARIEE: 'Parent de la mariée',
-                    AMI_MARIEE: 'Ami(e) de la mariée'
-                  };
-                %>
-                <%= LABELS[r.relation] || r.relation %>
-              </td>
-              <td data-label="Confirmé le">
-                <%# Affiché à l'heure d'Abidjan : c'est le repère de l'organisateur. %>
-                <%= r.createdAt.toLocaleString('fr-FR', {
-                      timeZone: 'Africa/Abidjan',
-                      day: '2-digit', month: '2-digit', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit'
-                    }) %>
-              </td>
+              <%# Libellé calculé dans le service, où la répartition compte les
+                  mêmes relations : une seule source. %>
+              <td data-label="Relation"><%= r.relationLabel %></td>
+              <%# Affiché à l'heure d'Abidjan : c'est le repère de l'organisateur. %>
+              <td data-label="Confirmé le"><%= formatDate(r.createdAt) %></td>
               <td data-label="Carte" class="table__actions">
                 <%# Réutilise GET /api/card/:id (FC-019), qui régénère à la
                     volée si la carte manque — d'où l'absence de bouton séparé. %>
@@ -122,6 +255,8 @@
   <% } %>
 
 </main>
+
+<script src="/shared/admin.js" defer></script>
 
 </body>
 </html>

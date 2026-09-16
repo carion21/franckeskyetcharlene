@@ -11,6 +11,13 @@
   font-size: 16px;
 }
 
+/* `[hidden]` doit l'emporter, toujours.
+   L'attribut ne doit son effet qu'à une règle de la feuille du navigateur,
+   que n'importe quelle règle d'auteur portant `display` écrase en silence :
+   `.btn { display: inline-block }` suffit à faire réapparaître un bouton
+   masqué en JavaScript, sans la moindre erreur pour le signaler. */
+[hidden] { display: none !important; }
+
 .admin--centered {
   display: grid;
   place-items: center;
@@ -75,6 +82,39 @@
 }
 
 .field__input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Champ + bouton « œil » (shared/admin.js). Le bouton est posé au-dessus du
+   champ plutôt qu'à côté : sur un écran de 360 px, une colonne de plus
+   comprimerait la saisie du mot de passe. */
+.field__control { position: relative; display: flex; }
+
+/* Réserve la place du bouton dans le champ, pour que le texte ne passe
+   jamais dessous — un mot de passe long se tape jusqu'au bout. */
+.field__input--toggled { padding-right: 48px; }
+
+.field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  /* 40 px : cible tactile confortable sans dépasser la hauteur du champ. */
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.65;
+}
+
+.field__toggle svg { width: 20px; height: 20px; }
+.field__toggle:hover { opacity: 1; }
+.field__toggle[aria-pressed="true"] { opacity: 1; color: var(--gold); }
+.field__toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ── Boutons ─────────────────────────────────────────────────────────── */
 .btn {
@@ -196,6 +236,27 @@
 
 .stat--warn { border-color: var(--gold); background: rgba(201, 162, 39, 0.08); }
 
+/* Tuile-filtre : un lien qui garde l'apparence d'une tuile. `display: block`
+   et la couleur héritée, sinon le lien reprend le style des liens du tableau
+   et la tuile devient bleue et soulignée. */
+.stat--lien {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.stat--lien:hover { border-color: var(--gold); }
+.stat--lien:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Filtre actif : la tuile est pleine, pas seulement bordée — l'état doit se
+   voir d'un coup d'œil depuis l'autre bout de la grille. */
+.stat--actif {
+  border-color: var(--emerald);
+  background: rgba(4, 98, 65, 0.1);
+  box-shadow: inset 0 0 0 1px var(--emerald);
+}
+
 .stat__value {
   display: block;
   font-family: var(--font-body);
@@ -214,6 +275,109 @@
   margin-top: 4px;
   font-size: 0.62rem;
   color: var(--gold-on-cream);
+}
+
+/* Détail en personnes, sous le nombre de confirmations. Discret : c'est une
+   précision, pas la valeur qu'on vient lire. */
+.stat__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.85rem;
+  opacity: 0.65;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ── Répartition par relation ────────────────────────────────────────── */
+.breakdown { margin-bottom: 24px; }
+
+.breakdown__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-bottom: 10px;
+}
+
+.breakdown__title {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--gold-on-cream);
+}
+
+.breakdown__sides {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--gold-on-cream);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.breakdown__sides strong { color: var(--emerald); }
+
+/* Les deux côtés sont aussi des filtres. Discrets : le filtre principal
+   reste la tuile, celui-ci n'est qu'un raccourci. */
+.breakdown__side {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.breakdown__side:hover { border-bottom-color: var(--gold); }
+.breakdown__side:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.breakdown__side.is-actif { border-bottom-color: var(--emerald); }
+
+.breakdown__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+/* Un liseré par côté : marié / mariée se distinguent d'un coup d'œil, sans
+   ajouter ni icône ni couleur étrangère à la palette. */
+.breakdown .stat { border-left-width: 3px; }
+.stat--marie { border-left-color: var(--emerald); }
+.stat--mariee { border-left-color: var(--gold); }
+
+/* ── Barre d'outils (recherche) ──────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+
+/* Assez large pour un nom complet, jamais toute la largeur de l'écran. */
+.toolbar__search { flex: 1 1 260px; max-width: 420px; }
+
+/* Le tri se fait par les en-têtes de colonne tant qu'elles existent ; ces
+   listes déroulantes ne servent que sous 720 px, où le tableau devient une
+   pile de fiches sans en-têtes. Masquées, mais présentes dans le formulaire :
+   un champ en `display: none` est tout de même envoyé, ce qui permet à une
+   recherche de repartir avec le tri en cours. */
+.toolbar__sort { display: none; }
+
+/* Compteur, réinitialisation et export, poussés à droite. */
+.toolbar__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding-bottom: 2px;
+}
+
+.toolbar__count {
+  margin: 0;
+  font-size: 0.64rem;
+  color: var(--gold-on-cream);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .toolbar__sort { display: flex; flex: 1 1 140px; }
+  .toolbar__end { margin-left: 0; width: 100%; }
 }
 
 /* ── Tableau ─────────────────────────────────────────────────────────── */
@@ -249,11 +413,34 @@
   background: rgba(4, 98, 65, 0.04);
 }
 
+/* Ligne écartée par la recherche. Sélecteur assez spécifique pour l'emporter
+   sur le `display: block` de la vue mobile, où les lignes deviennent des
+   fiches — sans quoi le filtre ne masquerait rien sur téléphone. */
+.table tbody tr.is-filtered-out { display: none; }
+
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: rgba(201, 162, 39, 0.05); }
 
 .table a { color: var(--emerald); }
 .table__empty { opacity: 0.45; }
+
+/* En-tête triable : le lien remplit la cellule pour que toute la zone soit
+   cliquable, et garde la couleur de l'en-tête plutôt que celle des liens. */
+.table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.table__sort:hover { color: var(--emerald); }
+.table__sort:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.table th .table__sort.is-actif { color: var(--emerald); }
+
+/* La flèche indique le sens du tri. `aria-sort` sur le <th> porte la même
+   information pour les lecteurs d'écran : la flèche est purement visuelle. */
+.table__arrow { font-size: 0.9em; }
 
 .table__actions { display: flex; gap: 8px; }
 
@@ -263,6 +450,11 @@
   color: var(--ink);
   opacity: 0.7;
 }
+
+/* « Voir toute la liste » : sans couleur explicite, le lien sort en bleu
+   navigateur puis en violet une fois visité — les deux seules teintes
+   étrangères à la palette de tout le site. */
+.empty a { color: var(--emerald); }
 
 /* Sous 720px le tableau devient une pile de fiches : un tableau à 7 colonnes
    en scroll horizontal est pénible à lire sur téléphone. */
@@ -295,6 +487,10 @@
     color: var(--gold-on-cream);
   }
 
-  .table__actions { justify-content: flex-end; }
-  .table__actions::before { content: none; }
+  /* `td` dans les deux sélecteurs, sinon `.table td` l'emporte : les boutons
+     repartent en `space-between`, chacun collé à un bord de la fiche, et le
+     libellé « Carte » se réaffiche à côté de deux boutons qui le disent
+     déjà. */
+  .table td.table__actions { justify-content: flex-end; }
+  .table td.table__actions::before { content: none; }
 }
