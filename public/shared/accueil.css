@@ -1,0 +1,177 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Page d'accueil — la question qui oriente vers une des trois déclinaisons.
+
+   Fond émeraude plutôt que crème : c'est le premier écran, il doit poser le
+   ton avant la landing, et l'or y tient son rôle d'ornement (PRD §2.1). Les
+   teintes de texte viennent des jetons de contraste de `shared/palette.css` —
+   l'or pur échoue au niveau AA sur du petit texte.
+
+   Aucune dépendance : ni GSAP, ni JavaScript. Cette page est la porte
+   d'entrée du site, elle doit s'afficher même si tout le reste échoue.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.welcome {
+  min-height: 100vh;
+  /* `dvh` évite que la barre d'adresse mobile rogne le bas de la page ;
+     `vh` reste en repli pour les navigateurs qui l'ignorent. */
+  min-height: 100dvh;
+  margin: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--emerald-light) 0%, transparent 55%),
+    linear-gradient(180deg, var(--emerald) 0%, var(--emerald-deep) 60%, var(--emerald-darkest) 100%);
+  color: var(--cream);
+}
+
+.welcome__wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(36px, 7vw, 60px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(36px, 8vw, 72px) var(--gutter);
+}
+
+/* ── En-tête ────────────────────────────────────────────────────────── */
+
+.welcome__head { text-align: center; }
+
+.welcome__mark {
+  margin: 0;
+  font-size: clamp(38px, 11vw, 56px);
+  line-height: 1;
+  color: var(--gold-on-emerald);
+}
+
+.welcome__mark--small { font-size: clamp(24px, 7vw, 32px); }
+
+.welcome__names {
+  margin: 14px 0 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(21px, 5.4vw, 27px);
+  letter-spacing: 0.04em;
+  color: var(--cream);
+}
+
+.welcome__date {
+  margin: 10px 0 0;
+  font-size: 0.68rem;
+  color: var(--cream-dim);
+}
+
+/* ── La question ────────────────────────────────────────────────────── */
+
+.ask {
+  width: 100%;
+  max-width: 660px;
+  text-align: center;
+  /* `auto` en haut et en bas : la question se centre dans l'espace restant
+     sur grand écran, sans décoller de l'en-tête sur mobile. */
+  margin: auto 0;
+}
+
+.ask__title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(24px, 6.4vw, 34px);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--cream);
+  text-wrap: balance;
+}
+
+.ask__lede {
+  max-width: 46ch;
+  margin: 18px auto 0;
+  font-size: clamp(15px, 3.8vw, 17px);
+  line-height: 1.6;
+  color: var(--cream-dim);
+}
+
+/* ── Les trois réponses ─────────────────────────────────────────────── */
+
+.choices {
+  display: grid;
+  gap: 14px;
+  margin-top: clamp(28px, 6vw, 40px);
+  /* Une colonne sur mobile — trois cartes côte à côte y deviendraient
+     illisibles. Le passage à trois colonnes se fait plus bas. */
+  grid-template-columns: 1fr;
+}
+
+.choice {
+  display: grid;
+  gap: 7px;
+  padding: 22px 24px;
+  border: 1px solid rgba(228, 199, 102, 0.34);
+  border-radius: 18px;
+  background: rgba(253, 251, 246, 0.05);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-mid) var(--ease-out),
+    background-color var(--dur-mid) var(--ease-out),
+    transform var(--dur-mid) var(--ease-out);
+}
+
+.choice:hover {
+  border-color: var(--gold);
+  background: rgba(253, 251, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.choice:active { transform: translateY(0); }
+
+.choice__num {
+  font-size: 0.66rem;
+  color: var(--gold-on-emerald);
+}
+
+.choice__title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(18px, 4.6vw, 21px);
+  color: var(--cream);
+}
+
+.choice__sub {
+  font-size: clamp(14px, 3.6vw, 15px);
+  line-height: 1.55;
+  color: var(--cream-dim);
+}
+
+/* ── Pied ───────────────────────────────────────────────────────────── */
+
+.welcome__foot {
+  text-align: center;
+  opacity: 0.75;
+}
+
+.welcome__foot .welcome__date { margin-top: 6px; }
+
+/* ── Écrans larges ──────────────────────────────────────────────────── */
+/* Trois colonnes seulement quand chaque carte garde une largeur lisible.
+   En dessous, l'empilement vertical reste préférable à trois colonnes
+   étroites où les sous-titres se hachent sur cinq lignes. */
+@media (min-width: 760px) {
+  .choices {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .choice { padding: 26px 24px; }
+}
+
+/* ── Mouvement réduit ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .choice,
+  .choice:hover,
+  .choice:active {
+    transition: none;
+    transform: none;
+  }
+}

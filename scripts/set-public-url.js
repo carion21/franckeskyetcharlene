@@ -28,6 +28,7 @@ var ROOT = path.join(__dirname, '..');
 // à partir de `PUBLIC_BASE_URL` au moment de la requête, elle n'a donc plus
 // d'URL en dur à réécrire. Seules les landings statiques en gardent.
 var TARGETS = [
+  'views/accueil.html',
   'public/v1/index.html',
   'public/v2/index.html',
   'public/v3/index.html'
