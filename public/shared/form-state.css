@@ -1,0 +1,106 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   États du formulaire RSVP : chargement, confirmation, verrouillage.
+
+   Partagé par les trois landings, comme `shared/rsvp.js` qui pilote ces
+   classes. Chaque version garde son propre `.submit` (or, dégradés,
+   arrondis) ; ce fichier ne touche qu'aux *états*, jamais au style de repos,
+   pour ne pas écraser l'identité de chaque landing.
+
+   Chargé après `vN/styles.css` — l'ordre compte, ces règles doivent gagner.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Chargement ─────────────────────────────────────────────────────────
+   Le serveur répond en ~300 ms : sans durée minimale côté JS, le spinner
+   n'apparaîtrait qu'un éclair et l'invité verrait le bouton « sauter »
+   directement au résultat. Le maintien est dans rsvp.js ; ici, l'allure. */
+
+.submit__spinner {
+  /* Caché au repos : seul l'état de chargement le révèle. */
+  display: none;
+  width: 15px;
+  height: 15px;
+  margin-right: 10px;
+  /* inline-block plutôt que flex sur le bouton : passer `.submit` en flex
+     changerait sa largeur dans les trois landings. En inline, le spinner
+     suit simplement le centrage du texte déjà en place. */
+  vertical-align: -2px;
+  border: 2px solid currentColor;
+  /* Un quart transparent : c'est ce vide qui rend la rotation lisible. */
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: submit-spin 0.7s linear infinite;
+}
+
+.submit.is-loading .submit__spinner { display: inline-block; }
+
+.submit.is-loading {
+  cursor: progress;
+  /* Pas d'`opacity` ici : le bouton travaille, il ne doit pas paraître
+     désactivé. Le grisé est réservé à l'état confirmé, juste en dessous. */
+  opacity: 1;
+}
+
+@keyframes submit-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Confirmé ───────────────────────────────────────────────────────────
+   Le bouton ne disparaît pas : il reste en place, grisé et inerte. Le faire
+   disparaître déplacerait tout ce qui suit au moment précis où l'invité lit
+   le message de confirmation. */
+
+.submit.is-confirmed,
+.submit.is-confirmed:hover {
+  background: rgba(253, 251, 246, 0.14);
+  color: var(--cream-dim);
+  /* `background` étant un dégradé dans les trois landings, il faut le
+     remplacer entièrement — une simple couleur ne le recouvrirait pas. */
+  background-image: none;
+  box-shadow: none;
+  cursor: default;
+  opacity: 1;
+}
+
+.submit.is-confirmed .submit__spinner { display: none; }
+
+/* ── Formulaire verrouillé ──────────────────────────────────────────────
+   Après confirmation, les champs restent visibles — l'invité peut relire ce
+   qu'il a envoyé — mais ne sont plus modifiables. `pointer-events: none` ne
+   suffirait pas : le clavier atteindrait encore les champs. Le verrou réel
+   est le `disabled` posé par rsvp.js ; ceci n'est que sa traduction visuelle. */
+
+[data-rsvp-form].is-locked {
+  opacity: 0.55;
+  /* Transition douce plutôt qu'un grisé sec, pour que l'œil suive le
+     passage du formulaire actif au formulaire archivé. */
+  transition: opacity 0.4s var(--ease-out, ease);
+}
+
+[data-rsvp-form].is-locked .field__input,
+[data-rsvp-form].is-locked .field__select,
+[data-rsvp-form].is-locked select,
+[data-rsvp-form].is-locked input {
+  cursor: default;
+}
+
+/* Le bouton garde son propre rendu : il n'est pas atténué deux fois. */
+[data-rsvp-form].is-locked .submit { opacity: 1; }
+
+/* ── Bloc de confirmation ───────────────────────────────────────────────
+   rsvp.js lui donne le focus pour que les lecteurs d'écran annoncent la
+   confirmation. Le bloc porte `tabindex="-1"` : la tabulation ne peut donc
+   jamais l'atteindre, et l'anneau de focus ne peut venir que de ce focus
+   programmatique — il n'apprend rien à qui vient de cliquer et encadre le
+   message d'un liseré parasite. On le retire dans les deux cas, sans passer
+   par `:focus-visible` dont l'heuristique varie d'un navigateur à l'autre. */
+
+[data-rsvp-done]:focus,
+[data-rsvp-done]:focus-visible { outline: none; }
+
+/* ── Accessibilité ──────────────────────────────────────────────────────
+   Mouvement réduit : le spinner tourne encore (sinon il ne signale plus
+   rien) mais lentement, et le verrouillage devient instantané. */
+@media (prefers-reduced-motion: reduce) {
+  .submit__spinner { animation-duration: 1.4s; }
+  [data-rsvp-form].is-locked { transition: none; }
+}

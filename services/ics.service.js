@@ -34,6 +34,11 @@
 
 var CALENDAR_PRODID = '-//Franckesky et Charlene//Mariage 10-10-2026//FR';
 
+// Hôte public, dérivé de PUBLIC_BASE_URL (voir services/qrcode.service.js).
+// Pas de repli codé en dur : qrcode.service valide déjà la variable au
+// démarrage, donc l'URL est forcément analysable ici.
+var PUBLIC_HOST = new URL(require('./qrcode.service').PUBLIC_BASE_URL).host;
+
 // Côte d'Ivoire is GMT+0 all year and has no daylight saving, which makes the
 // VTIMEZONE a single STANDARD block with no transition rule.
 var TZID = 'Africa/Abidjan';
@@ -253,7 +258,9 @@ function buildIcs(guest, options) {
   if (!guest || !guest.id) throw new Error('buildIcs: guest.id is required');
 
   var settings = options || {};
-  var domain = settings.domain || 'franckeskyetcharlene.geasscorp.com';
+  // Même source que les QR codes : une seule variable pour l'URL publique,
+  // sinon le lien du .ics et celui du QR peuvent diverger.
+  var domain = settings.domain || PUBLIC_HOST;
   var now = settings.now || new Date();
 
   var lines = [

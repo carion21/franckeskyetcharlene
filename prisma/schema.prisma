@@ -49,6 +49,25 @@ model sessions {
   data       String? @db.MediumText
 }
 
+/// Réponse à la question d'accueil : par quelle structure de récit le visiteur
+/// veut se laisser raconter le 10 octobre (PRD §1.1 — arbitrage des trois
+/// déclinaisons avant mise en production).
+///
+/// Volontairement anonyme : ni IP, ni user-agent, ni lien vers un Rsvp. Ce
+/// n'est pas un journal de fréquentation, seulement un décompte de goût — et
+/// une table sans donnée personnelle n'a pas de conservation à justifier.
+/// La répétition est bornée côté client par un cookie, pas ici : un compteur
+/// faussé de quelques voix ne change pas un arbitrage, une adresse IP stockée
+/// pour l'éviter, si.
+model LandingVote {
+  id        String   @id @default(uuid())
+  version   String   @db.VarChar(8) // "v1" | "v2" | "v3"
+  createdAt DateTime @default(now())
+
+  // L'unique lecture faite de cette table est « combien par version ».
+  @@index([version])
+}
+
 model AdminUser {
   id           String   @id @default(uuid())
   username     String   @unique

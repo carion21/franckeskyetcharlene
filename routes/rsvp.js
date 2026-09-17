@@ -16,6 +16,7 @@ var router = express.Router();
 var prisma = require('../config/db');
 var qrcodeService = require('../services/qrcode.service');
 var cardService = require('../services/card.service');
+var nameService = require('../services/name.service');
 
 // The four values the Rsvp.relation column accepts (PRD §7).
 var RELATIONS = ['PARENT_MARIE', 'AMI_MARIE', 'PARENT_MARIEE', 'AMI_MARIEE'];
@@ -147,8 +148,11 @@ router.post('/api/rsvp', async function (req, res, next) {
     try {
       rsvp = await prisma.rsvp.create({
         data: {
-          prenom: asString(body.prenom),
-          nom: asString(body.nom),
+          // Casse normalisée à l'écriture : le nom part ensuite sur la carte
+          // imprimée, dans le titre de la page et dans le dashboard, et un
+          // formulaire rempli au téléphone arrive souvent tout en majuscules.
+          prenom: nameService.formatName(body.prenom),
+          nom: nameService.formatName(body.nom),
           email: email,
           telephone: telephone,
           relation: asString(body.relation),

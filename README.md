@@ -517,11 +517,26 @@ Deux défauts relevés à la mesure, pas à l'œil :
 
 Le lien circulera surtout sur WhatsApp, où l'aperçu fait la première impression.
 
-**Image dédiée** : `public/images/og-cover.jpg`, 1200×630, générée par
-`node scripts/build-og-image.js` et commitée — aucune dépendance à l'exécution. À relancer si
-la photo ou la date changent. La photo du couple est en portrait (843×1264) ; livrée telle
-quelle, la plateforme l'aurait recadrée d'elle-même, en pratique sur le torse du marié, sans
-les visages ni les prénoms.
+**Images dédiées**, 1200×630, générées par `node scripts/build-og-image.js` et commitées —
+aucune dépendance à l'exécution. À relancer si une image source ou la date changent :
+
+| Fichier | Utilisé par | Contenu |
+|---|---|---|
+| `public/images/og-cover.jpg` | `/v2`, `/v3`, `/invitation/:id` | la photo du couple |
+| `public/images/og-alliance.jpg` | `/v1` | les alliances — cette version n'affiche plus la photo |
+
+Les sources ne conviennent pas telles quelles : la photo du couple est en portrait
+(843×1264), l'image des alliances est carrée (1024×1024). Livrées brutes, la plateforme les
+aurait recadrées d'elle-même — en pratique sur le torse du marié, sans les visages ni les
+prénoms.
+
+**Fond du hero de /v1** : `public/images/alliance-hero.jpg`, découpé dans
+`public/images/alliance.jpeg` par `node scripts/build-alliance-hero.js`. La source porte un
+monogramme doré qui n'est pas celui des mariés — des lettres approximatives, reste de la
+génération de l'image — et tout un décor de nappe autour de la plaque. Le cadrage part sous le
+monogramme et s'arrête au liseré de la plaque. **Le rapport du fichier (660×522) est repris en
+dur dans `public/v1/styles.css`** pour que le fondu bas s'arrête exactement où l'image
+s'arrête : recadrer autrement oblige à y retoucher le `79.1vw`.
 
 **URL absolues obligatoires** : les robots des messageries ne résolvent pas un chemin relatif,
 et l'aperçu sortirait sans image.
@@ -547,7 +562,7 @@ par un :
 | `var-in-script-tag` (`invitation.ejs`) | Attributs `data-*` échappés sur une balise `<script src>` sans corps inline |
 | `direct-response-write` (`card.js`) | Envoi d'un `Buffer` binaire avec un `Content-Type` fixe, pas du HTML reflété |
 | `path-join-resolve-traversal` (`pdf.service.js`) | Noms de fichiers de polices codés en dur, aucune donnée de requête |
-| `path-join-resolve-traversal` + `puppeteer-setcontent-injection` (`scripts/build-og-image.js`) | Script de build lancé à la main : il lit deux fichiers locaux au chemin codé en dur et n'assemble que des chaînes littérales. Aucune donnée de requête n'y entre |
+| `path-join-resolve-traversal` + `puppeteer-setcontent-injection` (`scripts/build-og-image.js`, `scripts/build-alliance-hero.js`) | Scripts de build lancés à la main : ils lisent des fichiers locaux au chemin codé en dur et n'assemblent que des chaînes littérales. Aucune donnée de requête n'y entre |
 | `express-check-csurf-middleware-usage` | `sameSite: 'strict'` : un POST cross-site arrive sans cookie de session, donc non authentifié (voir Phase 6) |
 | `express-cookie-session-no-secure` | `secure: isProduction` est une variable, que la règle ne sait pas évaluer — **`Secure` vérifié présent** dans l'en-tête réel en production |
 | `express-cookie-session-no-expires` | `maxAge` est défini ; express-session en dérive `Expires`, **constaté dans l'en-tête réel** |

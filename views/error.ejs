@@ -1,3 +1,53 @@
-<h1><%= message %></h1>
-<h2><%= error.status %></h2>
-<pre><%= error.stack %></pre>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= titre %> — Franckesky &amp; Charlène</title>
+<meta name="theme-color" content="#046241">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/shared/fonts.css">
+<link rel="stylesheet" href="/shared/palette.css">
+<link rel="stylesheet" href="/shared/error.css">
+</head>
+
+<body class="err">
+
+<main class="err__wrap">
+
+  <p class="err__mark t-script">F &amp; C</p>
+
+  <%# Le code est affiché discrètement : utile si l'invité doit le signaler,
+      sans être ce que l'on lit en premier. %>
+  <p class="err__code t-label"><%= status %></p>
+
+  <h1 class="err__title"><%= titre %></h1>
+
+  <p class="err__text t-verse"><%= message %></p>
+
+  <div class="err__actions">
+    <% if (status === 404) { %>
+      <%# Un lien d'invitation mort renvoie vers le formulaire : l'invité peut
+          reconfirmer et récupérer une carte, plutôt que de rester bloqué. %>
+      <a class="btn btn--gold t-label" href="/v1#rsvp">
+        <%= invitationPerdue ? 'Confirmer à nouveau ma présence' : "Aller à l'invitation" %>
+      </a>
+    <% } else { %>
+      <a class="btn btn--gold t-label" href="/v1">Retour à l'invitation</a>
+    <% } %>
+
+    <a class="btn btn--outline t-label" href="https://wa.me/2250709898475" target="_blank" rel="noopener noreferrer">
+      Écrire aux mariés
+    </a>
+  </div>
+
+  <p class="err__date t-label">10.10.2026</p>
+
+</main>
+
+</body>
+</html>

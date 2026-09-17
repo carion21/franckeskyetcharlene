@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Franckesky &amp; Charlène — 10 octobre 2026</title>
+<meta name="theme-color" content="#046241">
+<meta name="description" content="Mariage de Franckesky et Charlène, le samedi 10 octobre 2026 à Abidjan.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Franckesky &amp; Charlène">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://franckeskyetcharlene.geasscorp.com">
+<meta property="og:title" content="Franckesky &amp; Charlène — 10 octobre 2026">
+<meta property="og:description" content="Samedi 10 octobre 2026, Abidjan. Confirmez votre présence et recevez votre carte d'invitation.">
+<meta property="og:image" content="https://franckeskyetcharlene.geasscorp.com/images/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://franckeskyetcharlene.geasscorp.com/images/og-cover.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/shared/fonts.css">
+<link rel="stylesheet" href="/shared/palette.css">
+<link rel="stylesheet" href="/shared/accueil.css">
+</head>
+
+<body class="welcome">
+
+<main class="welcome__wrap">
+
+  <header class="welcome__head">
+    <p class="welcome__mark t-script">F &amp; C</p>
+    <h1 class="welcome__names">Franckesky &amp; Charlène</h1>
+    <p class="welcome__date t-label">Samedi 10 octobre 2026 · Abidjan</p>
+  </header>
+
+  <section class="ask" aria-labelledby="ask-title">
+    <h2 class="ask__title" id="ask-title">
+      Comment aimez-vous qu'on vous raconte une histoire ?
+    </h2>
+    <p class="ask__lede t-verse">
+      Votre réponse choisit la façon dont cette page vous racontera le 10 octobre.
+      Il n'y a pas de mauvaise réponse — seulement trois manières de dire la même chose.
+    </p>
+
+    <!-- Un vrai formulaire : la page fonctionne sans JavaScript, et l'écriture
+         du vote passe par un POST plutôt que par un lien qu'un préchargement
+         de navigateur rejouerait tout seul. -->
+    <form class="choices" method="post" action="/api/landing-choice">
+      <button class="choice" type="submit" name="version" value="v1">
+        <span class="choice__num t-label">I</span>
+        <span class="choice__title">D'un seul souffle</span>
+        <span class="choice__sub t-verse">
+          Tout s'enchaîne, sans reprendre son air — comme une pellicule qui défile.
+        </span>
+      </button>
+
+      <button class="choice" type="submit" name="version" value="v2">
+        <span class="choice__num t-label">II</span>
+        <span class="choice__title">Acte par acte</span>
+        <span class="choice__sub t-verse">
+          Chaque moment annoncé, à sa place, avec le temps de respirer entre deux.
+        </span>
+      </button>
+
+      <button class="choice" type="submit" name="version" value="v3">
+        <span class="choice__num t-label">III</span>
+        <span class="choice__title">En suivant le fil</span>
+        <span class="choice__sub t-verse">
+          Une seule ligne dorée, du premier mot au dernier, et le récit qui s'y accroche.
+        </span>
+      </button>
+    </form>
+  </section>
+
+  <footer class="welcome__foot">
+    <p class="welcome__mark welcome__mark--small t-script">F &amp; C</p>
+    <p class="welcome__date t-label">10.10.2026</p>
+  </footer>
+
+</main>
+
+</body>
+</html>

@@ -7,10 +7,57 @@
 
 var QRCode = require('qrcode');
 
-// Public base URL the QR points at. Overridable so staging/local runs don't
-// bake a production URL into a card that gets printed.
-var PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://franckeskyetcharlene.geasscorp.com')
-  .replace(/\/+$/, '');
+/**
+ * Public base URL every generated link points at: the printed QR codes, the
+ * .ics URL and the Open Graph previews.
+ *
+ * Read once at startup from PUBLIC_BASE_URL and validated here rather than
+ * defaulted to a production host. A card printed against the wrong domain is
+ * unrecoverable once it is on paper, so a missing or malformed value has to
+ * stop the boot loudly instead of silently producing plausible-looking QR
+ * codes that point somewhere else.
+ *
+ * Outside production the value is optional and falls back to the local server,
+ * so a dev run needs no configuration.
+ */
+var PUBLIC_BASE_URL = resolvePublicBaseUrl();
+
+function resolvePublicBaseUrl() {
+  // Trailing slashes are stripped: every caller concatenates "/invitation/…".
+  var raw = String(process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+
+  if (!raw) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'PUBLIC_BASE_URL is required in production (e.g. https://franckeskyetcharlene.example.com). ' +
+        'Without it the printed QR codes would point at the wrong host.'
+      );
+    }
+    return 'http://localhost:' + (process.env.PORT || '3000');
+  }
+
+  var parsed;
+  try {
+    parsed = new URL(raw);
+  } catch (err) {
+    throw new Error('PUBLIC_BASE_URL is not a valid absolute URL: "' + raw + '"');
+  }
+
+  // A scheme-less value ("franckeskyetcharlene.com") parses as neither http nor
+  // https and would produce a QR no phone can open.
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(
+      'PUBLIC_BASE_URL must start with http:// or https:// (got "' + parsed.protocol + '")'
+    );
+  }
+
+  // A path on the base ("…/fr") would silently break every generated link.
+  if (parsed.pathname !== '/' && parsed.pathname !== '') {
+    throw new Error('PUBLIC_BASE_URL must be an origin without a path (got "' + parsed.pathname + '")');
+  }
+
+  return parsed.origin;
+}
 
 // Error correction Q (~25%) rather than M: this code gets printed, handled and
 // scanned in a venue, so it has to survive a scuff or a thumb over a corner.

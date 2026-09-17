@@ -35,13 +35,19 @@
 
     <div class="field">
       <label class="field__label t-label" for="password">Mot de passe</label>
-      <input class="field__input" id="password" name="password" type="password"
-             autocomplete="current-password" required>
+      <%# Le bouton « œil » est ajouté par shared/admin.js, jamais ici : sans
+          JavaScript il ne serait qu'un bouton qui ne fait rien. %>
+      <div class="field__control" data-password-toggle>
+        <input class="field__input field__input--toggled" id="password" name="password"
+               type="password" autocomplete="current-password" required>
+      </div>
     </div>
 
     <button class="btn btn--gold t-label" type="submit">Se connecter</button>
   </form>
 </main>
+
+<script src="/shared/admin.js" defer></script>
 
 </body>
 </html>

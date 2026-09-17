@@ -41,6 +41,8 @@
 <link rel="stylesheet" href="/shared/fonts.css">
 <link rel="stylesheet" href="/shared/palette.css">
 <link rel="stylesheet" href="/v3/styles.css">
+<!-- Après la feuille de la landing : ces règles d'état doivent gagner. -->
+<link rel="stylesheet" href="/shared/form-state.css">
 </head>
 
 <body class="thread">
@@ -244,7 +246,8 @@
           <p class="field__error" data-error-for="email" hidden>Email invalide</p>
         </div>
 
-        <button class="submit t-label" type="submit" data-submit>
+        <button class="submit t-label" type="submit" data-submit aria-busy="false">
+          <span class="submit__spinner" aria-hidden="true"></span>
           <span data-submit-label>Confirmer ma présence</span>
         </button>
 
