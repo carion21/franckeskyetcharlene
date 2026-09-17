@@ -118,14 +118,19 @@
   position: absolute;
   inset: 0;
   background-color: var(--emerald-light);
-  /* WebP d'abord (43 Ko contre 90 Ko pour le JPEG, à cadrage identique) : sur
-     /v3 la photo EST l'élément LCP, et les 47 Ko économisés se lisent
-     directement sur le temps d'affichage en 3G. Les navigateurs qui ne savent
-     pas lire `image-set()` ignorent la déclaration et gardent le JPEG
-     ci-dessus — aucun hero vide nulle part. */
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
     url('/images/alliance-hero.jpg');
+  /* WebP d'abord (42 Ko contre 86 Ko, au pixel près le même cadrage 660×522,
+     donc le masque et les deux limites de `background-size` restent valables).
+     Depuis que /v1 ouvre sur la plaque, c'est ELLE l'élément LCP de la page :
+     mesuré à 3020 ms en 3G rapide sur la production, soit juste au-dessus du
+     budget de 3 s. Les navigateurs qui ne lisent pas `image-set()` ignorent
+     cette déclaration et gardent le JPEG ci-dessus. */
+  background-image:
+    radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
+    image-set(url('/images/alliance-hero.webp') type('image/webp'),
+              url('/images/alliance-hero.jpg') type('image/jpeg'));
   /* La plaque se pose en haut de page comme une carte, et s'arrête où elle
      s'arrête : les prénoms et le compte à rebours viennent sous elle, sur
      l'émeraude. En `cover`, les anneaux étaient agrandis au point d'être
