@@ -44,12 +44,13 @@ var VARIANTES = [
       'linear-gradient(180deg, rgba(2,56,35,.30), rgba(2,56,35,.55))'
   },
   {
-    // Les alliances : le recadrage déjà fait pour le hero (plaque seule, sans
-    // le monogramme étranger ni la nappe). Posée entière à droite plutôt que
-    // recadrée en plein cadre — une plaque coupée en deux ne se lit plus.
+    // Les alliances : le recadrage déjà fait pour le hero. Posée entière à
+    // droite plutôt que recadrée en plein cadre — calée sur la hauteur, le
+    // 660×522 occupe 796 px des 1200, et les deux anneaux tiennent dedans.
+    // Agrandie davantage, l'image perdait l'anneau de droite hors cadre.
     source: 'alliance-hero.jpg',
     sortie: 'og-alliance.jpg',
-    fond: 'background-size: auto 118%; background-position: right -40px top -34px;',
+    fond: 'background-size: auto 100%; background-position: right top;',
     // Voile plus franc à gauche, presque rien à droite : les anneaux doivent
     // rester nets, le texte a besoin d'un fond calme.
     voile:

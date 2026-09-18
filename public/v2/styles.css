@@ -146,44 +146,72 @@
   position: absolute;
   inset: 0;
   background-color: var(--emerald-light);
-  /* WebP d'abord (43 Ko contre 90 Ko pour le JPEG, à cadrage identique) : sur
-     /v3 la photo EST l'élément LCP, et les 47 Ko économisés se lisent
+  /* Une nature morte — satin, roses, eucalyptus, carton d'invitation, alliances
+     sur marbre — et non la photo du couple : cette version découpe la lecture
+     en actes annoncés, et s'ouvre donc sur une scène composée plutôt que sur un
+     instantané. /v3 garde la photo des mariés.
+
+     Le fichier est un recadrage (scripts/build-flatlay-hero.js), pas la source
+     brute : celle-ci montre un carton calligraphié « R & J », qui n'est pas le
+     monogramme des mariés.
+
+     WebP d'abord (21 Ko contre 47 Ko pour le JPEG, à cadrage identique) : la
+     photo EST l'élément LCP de cette page, et les Ko économisés se lisent
      directement sur le temps d'affichage en 3G. Les navigateurs qui ne savent
      pas lire `image-set()` ignorent la déclaration et gardent le JPEG
      ci-dessus — aucun hero vide nulle part. */
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
-    url('/images/couple.jpeg');
+    url('/images/flatlay-hero.jpg');
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
-    image-set(url('/images/couple.webp') type('image/webp'),
-              url('/images/couple.jpeg') type('image/jpeg'));
+    image-set(url('/images/flatlay-hero.webp') type('image/webp'),
+              url('/images/flatlay-hero.jpg') type('image/jpeg'));
   background-size: cover;
-  /* Photo portrait, visages dans le tiers haut : on ancre le cadrage en haut
-     pour ne pas les rogner sur un viewport large. */
-  background-position: center 22%;
-  /* Assez présente pour qu'on reconnaisse le couple — la lisibilité vient du
+  /* Alliances dans le tiers haut du cadrage (15→31 % du fichier) : on ancre en
+     haut pour qu'elles restent au-dessus du bloc de texte, qui occupe la bande
+     35→65 % du hero. Plus bas, le nom leur passerait au travers. */
+  background-position: center top;
+  /* Assez présente pour qu'on lise la scène — la lisibilité du texte vient du
      voile, pas de l'effacement de l'image. */
   opacity: 0.92;
   will-change: transform;
 }
 
+/* Écran plus large que haut : `cover` cale alors l'image sur la LARGEUR et ne
+   laisse voir qu'une tranche horizontale du fichier. Ancrée en haut, cette
+   tranche ne montrait que l'eucalyptus agrandi — la scène devenait illisible,
+   sans un seul anneau à l'écran. On redescend donc le point d'ancrage pour que
+   la tranche visible soit celle des alliances (15→31 % du fichier).
+
+   1440×900 : tranche de 342 px sur les 1200, ancrée à 12 % → fenêtre 100→442,
+   les deux anneaux (180→370) tiennent dedans avec une marge de marbre. */
+@media (min-aspect-ratio: 4/5) {
+  .hero__photo { background-position: center 12%; }
+}
+
 .hero__veil {
   position: absolute;
   inset: 0;
-  /* Mesuré au pixel sur la photo réelle : sous la ligne « Abidjan · 10 Octobre
-     2026 », le voile d'origine laissait un fond à rgb(86,118,98), soit 3,04:1
-     pour l'or — sous AA. La rampe monte donc plus vite dès 34 %, là où le texte
-     commence, tout en gardant le creux à 20 % qui dégage les visages : c'est
-     leur photo, on ne l'efface pas, on la module. */
+  /* Mesuré au pixel sur l'image réelle. Le creux à 20 % est conservé : c'est là
+     que sont les alliances, et les assombrir reviendrait à défaire la raison
+     d'être de cette image. La rampe monte ensuite dès 34 %, là où le texte
+     commence.
+
+     Les valeurs précédentes (0,56 / 0,75 / 0,86) étaient calibrées sur la photo
+     du couple. Le marbre et le satin sont bien plus lumineux : sur leur 97e
+     centile de luminance, relevé à rgb(240,237,232) dans la bande du compte à
+     rebours, l'or --gold-on-emerald tombait à 3,63:1 à 0,70 — sous AA. Il faut
+     0,78 pour repasser (4,57:1), et 0,84 laisse la marge du zoom Ken Burns, qui
+     fait défiler l'image sous le texte. Le crème du nom suit à 8,03:1. */
   background:
     linear-gradient(180deg,
       rgba(2, 56, 35, 0.58) 0%,
-      rgba(2, 56, 35, 0.30) 20%,
-      rgba(2, 56, 35, 0.56) 34%,
-      rgba(2, 56, 35, 0.75) 44%,
-      rgba(2, 56, 35, 0.86) 70%,
-      rgba(2, 56, 35, 0.94) 100%);
+      rgba(2, 56, 35, 0.34) 20%,
+      rgba(2, 56, 35, 0.64) 34%,
+      rgba(2, 56, 35, 0.82) 44%,
+      rgba(2, 56, 35, 0.88) 70%,
+      rgba(2, 56, 35, 0.95) 100%);
 }
 
 .hero__inner { position: relative; z-index: 1; }

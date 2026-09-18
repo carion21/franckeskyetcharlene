@@ -104,13 +104,17 @@
   text-align: center;
 }
 
-/* Les alliances gravées sur la plaque de marbre, et non la photo du couple :
-   v1 s'ouvre comme un carton d'invitation, ce que prolongent ensuite ses
-   blocs encadrés d'or. Les deux autres versions gardent la photo.
+/* Les alliances, et non la photo du couple : v1 s'ouvre comme un carton
+   d'invitation, ce que prolongent ensuite ses blocs encadrés d'or. /v3 garde
+   la photo.
+
+   Alliances posées sur un voile clair, gypsophiles en flou : douces et sans
+   arête, dans le registre de la bande-film qui suit — les sections de cette
+   version s'enchaînent sans rupture, l'image d'ouverture non plus.
 
    Le fichier est un recadrage de l'image d'origine (scripts/build-alliance-hero.js),
-   pas la source brute : celle-ci porte un monogramme qui n'est pas celui des
-   mariés et tout un décor de nappe autour de la plaque.
+   pas la source brute : celle-ci est un portrait aux angles arrondis, frange
+   blanche dans les coins comprise.
 
    Le dégradé sous-jacent reste déclaré : si le fichier venait à manquer, le
    hero garde un fond correct plutôt qu'une image cassée. */
@@ -121,17 +125,16 @@
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
     url('/images/alliance-hero.jpg');
-  /* WebP d'abord (42 Ko contre 86 Ko, au pixel près le même cadrage 660×522,
+  /* WebP d'abord (21 Ko contre 47 Ko, au pixel près le même cadrage 660×522,
      donc le masque et les deux limites de `background-size` restent valables).
-     Depuis que /v1 ouvre sur la plaque, c'est ELLE l'élément LCP de la page :
-     mesuré à 3020 ms en 3G rapide sur la production, soit juste au-dessus du
-     budget de 3 s. Les navigateurs qui ne lisent pas `image-set()` ignorent
-     cette déclaration et gardent le JPEG ci-dessus. */
+     Depuis que /v1 ouvre sur cette image, c'est ELLE l'élément LCP de la page.
+     Les navigateurs qui ne lisent pas `image-set()` ignorent cette déclaration
+     et gardent le JPEG ci-dessus. */
   background-image:
     radial-gradient(120% 90% at 50% 25%, rgba(201, 162, 39, 0.22), transparent 60%),
     image-set(url('/images/alliance-hero.webp') type('image/webp'),
               url('/images/alliance-hero.jpg') type('image/jpeg'));
-  /* La plaque se pose en haut de page comme une carte, et s'arrête où elle
+  /* L'image se pose en haut de page comme une carte, et s'arrête où elle
      s'arrête : les prénoms et le compte à rebours viennent sous elle, sur
      l'émeraude. En `cover`, les anneaux étaient agrandis au point d'être
      coupés des deux côtés, et le nom leur passait au travers.
@@ -140,10 +143,15 @@
      large que l'écran (téléphone), jamais plus haute que les deux tiers du
      hero (grand écran, où caler sur la largeur ferait des alliances de 70 cm).
      83.4svh = 66 % de hauteur ramenés en largeur par le rapport de l'image. */
-  background-size: min(100%, 83.4svh) auto;
+     Une taille par couche : sans la première valeur, le lavis doré hérite de
+     la taille de l'image et s'arrête à ses bords — sur grand écran, où l'image
+     ne fait pas toute la largeur, cet arrêt dessinait une arête verticale
+     nette de chaque côté, celle-là même que le fondu latéral cuit dans le
+     fichier cherche à effacer. */
+  background-size: 100% 100%, min(100%, 83.4svh) auto;
   background-repeat: no-repeat;
   background-position: center top;
-  /* La plaque se dissout dans l'émeraude de la page au lieu de s'arrêter net.
+  /* L'image se dissout dans l'émeraude de la page au lieu de s'arrêter net.
      Sans ce fondu, sa limite basse se lit comme une bande collée en travers
      de l'écran, d'autant que le voile assombrit le bas de l'image juste
      au-dessus d'un fond plus clair.
@@ -173,23 +181,30 @@
      franches, puis de plus en plus dense en descendant vers le nom et le
      compte à rebours, qui ont besoin d'un fond calme.
 
-     Les deux premiers arrêts sont laissés tels quels : c'est là que sont les
-     anneaux, et les assombrir reviendrait à défaire la raison d'être de cette
-     image. La montée est en revanche avancée à partir de 34 %. Raison mesurée :
-     sur un écran large et court (1440×900), la plaque est plafonnée en hauteur
-     et non en largeur, si bien qu'elle descend jusqu'à 66 % du hero et passe
-     DERRIÈRE la ligne « Abidjan · 10 Octobre 2026 », qui tombait alors à
-     3,01:1 sur le marbre clair. En 390×844 la plaque s'arrête à 36 % et le cas
+     Les deux premiers arrêts restent légers : c'est là que sont les anneaux,
+     et les assombrir reviendrait à défaire la raison d'être de cette image.
+     La montée est en revanche avancée à partir de 34 %, et plus raide qu'avant.
+
+     Raison mesurée : sur un écran large et court (1440×900), l'image est
+     plafonnée en hauteur et non en largeur, si bien qu'elle descend jusqu'à
+     66 % du hero et passe DERRIÈRE « Abidjan · 10 Octobre 2026 » (49→51 %) et
+     le compte à rebours (56→65 %). En 390×844 elle s'arrête à 36 % et le cas
      ne se présente pas — d'où un défaut invisible au viewport de référence.
-     Ce qui est assombri ici, c'est le bas de la plaque, pas les anneaux. */
+
+     Les valeurs précédentes (0,44 / 0,74) étaient calibrées sur la plaque de
+     marbre vert, sombre. Le voile clair de la nouvelle image est bien plus
+     lumineux : sur son 97e centile de luminance, relevé à rgb(224,206,166),
+     l'or --gold-on-emerald tombait à 2,86:1 à 0,54 et il faut 0,74 pour
+     repasser AA (4,60:1). 0,80 à 46 % laisse la marge du zoom Ken Burns, qui
+     déplace l'image sous le texte pendant le défilement. */
   background:
     linear-gradient(180deg,
       rgba(2, 56, 35, 0.34) 0%,
       rgba(2, 56, 35, 0.18) 20%,
-      rgba(2, 56, 35, 0.44) 34%,
-      rgba(2, 56, 35, 0.74) 46%,
-      rgba(2, 56, 35, 0.78) 70%,
-      rgba(2, 56, 35, 0.92) 100%);
+      rgba(2, 56, 35, 0.60) 34%,
+      rgba(2, 56, 35, 0.80) 46%,
+      rgba(2, 56, 35, 0.84) 70%,
+      rgba(2, 56, 35, 0.94) 100%);
 }
 
 .hero__inner {
