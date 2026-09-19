@@ -8,12 +8,13 @@
  * Script ponctuel, comme build-og-image.js : le résultat est commité, le site
  * n'en dépend pas à l'exécution. À relancer si l'image source change.
  *
- * La source est une photo d'alliances posées sur un voile clair, sous des
- * gypsophiles en flou : douce, continue, sans arête — le même registre que la
- * bande-film de /v1, où les sections s'enchaînent sans rupture. (L'ancienne
- * source, la plaque de marbre vert public/images/alliance.jpeg, reste dans le
- * dossier sans plus être utilisée : elle documente d'où venait le fond
- * précédent.)
+ * La source est une photo d'alliances posées sur des pétales de roses, avec
+ * un bokeh doré en flou tout autour : douce, continue, sans arête — le même
+ * registre que la bande-film de /v1, où les sections s'enchaînent sans
+ * rupture. (L'ancienne plaque de marbre vert public/images/alliance.jpeg
+ * reste dans le dossier sans plus être utilisée. Le voile clair sous
+ * gypsophiles qui occupait ce même fichier avant n'est plus sur disque, mais
+ * reste récupérable dans l'historique git.)
  *
  * build-og-image.js repart du fichier produit ici pour og-alliance.jpg :
  * relancer les deux scripts à la suite, dans cet ordre.
@@ -43,16 +44,14 @@ var SOURCE = path.join(ROOT, 'public', 'images', 'alliance-bokeh.jpeg');
 var OUT_JPEG = path.join(ROOT, 'public', 'images', 'alliance-hero.jpg');
 var OUT_WEBP = path.join(ROOT, 'public', 'images', 'alliance-hero.webp');
 
-var SOURCE_WIDTH = 735;
+var SOURCE_WIDTH = 717;
 
-// Coordonnées relevées sur la source (735×1284) :
-//   alliances    x 90→640   y 660→900
-//   angles arrondis : ~20 px de frange claire sur chaque bord
-//   tache rose   x 640→735  y 1255→1284
-// Le cadrage laisse ~60 px au-dessus des anneaux (les gypsophiles en flou) et
-// descend 220 px sous eux : les anneaux tombent ainsi dans le tiers haut du
-// cadre, au-dessus de la zone de texte.
-var CROP = { x: 38, y: 600, width: 660, height: 522 };
+// Coordonnées relevées sur la source (717×1280, alliances sur pétales de
+// roses et bokeh doré) :
+//   alliances    x 70→620   y 530→800
+// Le cadrage laisse ~60 px au-dessus des anneaux (le bokeh flou) et descend
+// ~190 px sous eux, centré horizontalement sur les deux anneaux.
+var CROP = { x: 15, y: 470, width: 660, height: 522 };
 
 // Fondu latéral cuit dans le fichier, vers --emerald-light — la couleur que
 // .hero__photo porte en `background-color`, donc ce que l'image a derrière et
