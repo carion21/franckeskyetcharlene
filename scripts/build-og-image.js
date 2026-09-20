@@ -2,8 +2,9 @@
 /**
  * Génère les images de partage (Open Graph) :
  *
- *   public/images/og-cover.jpg      la photo du couple — /v2, /v3, /invitation
- *   public/images/og-alliance.jpg   les alliances — /v1, qui n'affiche plus la photo
+ *   public/images/og-cover.jpg      la photo du couple — /v3, /invitation
+ *   public/images/og-alliance.jpg   les alliances sur pétales — /v1
+ *   public/images/og-flatlay.jpg    la nature morte alliances+carton — /v2
  *
  *   node scripts/build-og-image.js
  *
@@ -16,10 +17,13 @@
  * plateforme, au petit bonheur — en pratique sur le torse du marié, sans les
  * visages ni les prénoms.
  *
- * Les deux variantes partagent le même gabarit : même cadre doré, mêmes
- * prénoms, même date. Seuls changent l'image de fond et la façon de la poser —
- * une photo se laisse recadrer en plein cadre, une plaque gravée non : elle a
- * des bords, et on les voit.
+ * Chaque version a son aperçu de lien dédié, assorti à ce que montre son hero
+ * — /v2 ne montre la photo du couple nulle part (cf. build-flatlay-hero.js),
+ * son aperçu ne doit donc pas la montrer non plus. Les trois variantes
+ * partagent le même gabarit : même cadre doré, mêmes prénoms, même date.
+ * Seuls changent l'image de fond et la façon de la poser — une photo se
+ * laisse recadrer en plein cadre, une plaque gravée non : elle a des bords,
+ * et on les voit.
  */
 
 var fs = require('fs');
@@ -56,6 +60,20 @@ var VARIANTES = [
     voile:
       'linear-gradient(90deg, rgba(2,56,35,.96) 0%, rgba(2,56,35,.90) 40%, rgba(2,56,35,.30) 66%, rgba(2,56,35,.12) 100%),' +
       'linear-gradient(180deg, rgba(2,56,35,.22), rgba(2,56,35,.42))'
+  },
+  {
+    // La nature morte de /v2 (déjà recadrée pour son hero, 548×1200 : roses en
+    // frange haute, alliances et carton d'invitation dans le tiers supérieur,
+    // marbre uni en dessous — cf. build-flatlay-hero.js). `cover` remplit toute
+    // la largeur du gabarit sans rogner horizontalement (1200/548 = 630/1200 à
+    // peu de chose près), donc pas d'anneau perdu sur un bord. `14%` cale la
+    // fenêtre verticale sur les alliances plutôt que sur le marbre du bas.
+    source: 'flatlay-hero.jpg',
+    sortie: 'og-flatlay.jpg',
+    fond: 'background-size: cover; background-position: center 14%;',
+    voile:
+      'linear-gradient(90deg, rgba(2,56,35,.95) 0%, rgba(2,56,35,.86) 42%, rgba(2,56,35,.42) 68%, rgba(2,56,35,.30) 100%),' +
+      'linear-gradient(180deg, rgba(2,56,35,.30), rgba(2,56,35,.55))'
   }
 ];
 
